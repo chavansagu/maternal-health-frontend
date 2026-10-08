@@ -12,6 +12,7 @@ import {
   formatDateTime,
   formatDateForInput,
 } from "../utils/dateFormatter";
+import { getNextVisitRange, getTrackingFromLmp } from "../utils/gestation";
 
 const ANCVisitManagementLayer = () => {
   const [visits, setVisits] = useState([]);
@@ -289,13 +290,31 @@ const ANCVisitManagementLayer = () => {
         </span>
       );
     }
+    if (visit.tracking_type === "enhanced") {
+      return (
+        <span className="px-24 py-4 rounded-pill fw-medium text-sm bg-warning-focus text-warning-main">
+          Enhanced Tracking
+          {visit.gestational_weeks != null && ` · ${visit.gestational_weeks}w`}
+        </span>
+      );
+    }
+
     return (
       <span className="px-24 py-4 rounded-pill fw-medium text-sm bg-success-focus text-success-main">
         Regular
       </span>
     );
   };
+  const selectedWoman = pregnantWomen.find(
+    (w) => String(w.id) === String(visitData.pregnant_woman_id),
+  );
+  const createIsEnhanced = getTrackingFromLmp(
+    selectedWoman?.lmp_date,
+  ).isEnhanced;
+  const createRange = getNextVisitRange(visitData.visit_date, createIsEnhanced);
 
+  const updateIsEnhanced = selectedVisit?.tracking_type === "enhanced";
+  const updateRange = getNextVisitRange(visitData.visit_date, updateIsEnhanced);
   return (
     <div className="card h-100 p-0 radius-12">
       {/* Statistics Cards */}
@@ -835,6 +854,7 @@ const ANCVisitManagementLayer = () => {
                           setVisitData({
                             ...visitData,
                             visit_date: e.target.value,
+                            next_visit_date: "",
                           })
                         }
                         required
@@ -1059,6 +1079,8 @@ const ANCVisitManagementLayer = () => {
                         type="date"
                         className={`form-control ${errors.next_visit_date ? "is-invalid" : ""}`}
                         value={visitData.next_visit_date}
+                        min={createRange.min}
+                        max={createRange.max}
                         onChange={(e) =>
                           setVisitData({
                             ...visitData,
@@ -1473,6 +1495,8 @@ const ANCVisitManagementLayer = () => {
                         type="date"
                         className="form-control"
                         value={visitData.next_visit_date}
+                        min={createRange.min}
+                        max={createRange.max}
                         onChange={(e) =>
                           setVisitData({
                             ...visitData,

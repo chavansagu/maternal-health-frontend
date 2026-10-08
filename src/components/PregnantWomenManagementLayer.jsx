@@ -441,6 +441,7 @@ const PregnantWomenManagementLayer = () => {
     if (!registerData.lmp_date) newErrors.lmp_date = "LMP date is required";
 
     if (!registerData.edd_date) newErrors.edd_date = "EDD date is required";
+    if (!registerData.address) newErrors.address = "address  is required";
 
     setErrors(newErrors);
 
@@ -2183,7 +2184,9 @@ const PregnantWomenManagementLayer = () => {
                   </div>
 
                   <div className="col-12">
-                    <label className="form-label">Address</label>
+                    <label className="form-label">
+                      Address <span className="text-danger">*</span>
+                    </label>
 
                     <textarea
                       className="form-control"
