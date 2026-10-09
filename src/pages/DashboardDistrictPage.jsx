@@ -6,6 +6,7 @@ import {
   dashboardAPI,
   pmsmaSessionAPI,
   mobilisationAPI,
+  enhancedTrackingAPI,
 } from "../services/api";
 import ReactApexChart from "react-apexcharts";
 import { Icon } from "@iconify/react/dist/iconify.js";
@@ -290,6 +291,7 @@ const DashboardDistrictPage = () => {
   const [pmsmaSummary, setPmsmaSummary] = useState(null);
   const [mobilisationCount, setMobilisationCount] = useState(null);
   const [nearEddCases, setNearEddCases] = useState([]);
+  const [enhancedSummary, setEnhancedSummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [ancViewFilter, setAncViewFilter] = useState("Yearly");
   const [selectedBlock, setSelectedBlock] = useState("all");
@@ -319,6 +321,7 @@ const DashboardDistrictPage = () => {
           pmsmaSessionAPI.getDashboardSummary(),
           mobilisationAPI.getCount(),
           mobilisationAPI.getCases({ triggerType: "near_edd" }),
+          enhancedTrackingAPI.getSummary(),
         ]);
         const names = [
           "stats",
@@ -329,6 +332,7 @@ const DashboardDistrictPage = () => {
           "pmsmaSummary",
           "mobilisationCount",
           "nearEddCases",
+          "enhancedSummary",
         ];
         results.forEach((r, i) => {
           if (r.status === "rejected")
@@ -346,6 +350,7 @@ const DashboardDistrictPage = () => {
         setMobilisationCount(val(6));
         const nearEdd = val(7);
         setNearEddCases(Array.isArray(nearEdd) ? nearEdd : []);
+        setEnhancedSummary(val(8));
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
       } finally {
@@ -868,7 +873,46 @@ const DashboardDistrictPage = () => {
                 note="Pending + escalated follow-ups"
               />
             </div>
-
+            {/* Enhanced Tracking (28 weeks and above) */}
+            <div className="mt-24">
+              <SectionHeading
+                icon="mdi:shield-alert-outline"
+                title="Enhanced Tracking"
+              />
+            </div>
+            <div className="row row-cols-xl-2 row-cols-md-2 row-cols-1 gy-3">
+              <KpiCard
+                label="Enhanced Tracking"
+                hint="Pregnant women who have completed 28 weeks and are still pregnant. They are tracked with a weekly ANC visit until the 40th week."
+                value={enhancedSummary?.total || 0}
+                icon="mdi:shield-alert-outline"
+                iconBg="bg-warning-main"
+                onClick={go("/enhanced-tracking")}
+                subs={[
+                  {
+                    label: "high priority",
+                    value: enhancedSummary?.high_priority || 0,
+                    tone: "warning",
+                    onClick: go("/enhanced-tracking?level=high_priority"),
+                  },
+                  {
+                    label: "ANC overdue",
+                    value: enhancedSummary?.anc_overdue || 0,
+                    tone: "danger",
+                    onClick: go("/enhanced-tracking"),
+                  },
+                ]}
+              />
+              <KpiCard
+                label="Critical Cases"
+                hint="High-risk women at 28 weeks or more, close to (or past) their EDD, who have not been mobilised yet."
+                value={enhancedSummary?.critical || 0}
+                icon="material-symbols:warning"
+                iconBg="bg-red"
+                onClick={go("/enhanced-tracking?level=critical")}
+                note="HRP, near EDD and not mobilised"
+              />
+            </div>
             {/* USG */}
             <div className="mt-24">
               <SectionHeading

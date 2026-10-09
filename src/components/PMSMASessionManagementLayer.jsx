@@ -1,11 +1,43 @@
 import React, { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Icon } from "@iconify/react/dist/iconify.js";
-import { pmsmaSessionAPI } from "../services/api";
 import { formatDate, formatDateTime } from "../utils/dateFormatter";
 import { getUserRole } from "../services/auth";
 import PMSMAANCDetails from "./child/PMSMAANCDetails";
+import { pmsmaSessionAPI, deliveryPointAPI } from "../services/api";
 
+const HRP_FIELDS = [
+  ["hrp_severe_anaemia", "Severe Anaemia"],
+  ["hrp_pih", "PIH"],
+  ["hrp_gdm", "GDM"],
+  ["hrp_hiv_reactive", "Reactive for HIV"],
+  ["hrp_syphilis", "Syphilis"],
+  ["hrp_hypothyroidism", "Hypothyroidism"],
+  ["hrp_tuberculosis", "Tuberculosis"],
+  ["hrp_malaria", "Malaria"],
+  ["hrp_previous_lscs", "Previous LSCS"],
+  ["hrp_hepatitis_b", "Hepatitis B"],
+  ["hrp_teenage_pregnancy", "Teenage Pregnancy"],
+  ["hrp_still_birth_history", "History of Still Birth"],
+  ["hrp_rh_negative", "Rh Negative mother"],
+  ["hrp_early_primi", "Early Primi"],
+  ["hrp_elderly_primi", "Elderly Primi"],
+  ["hrp_multiple_pregnancy", "Twins / Multiple Pregnancy"],
+];
+
+const emptyCompleteData = () => ({
+  bp: "",
+  blood_sugar: "",
+  hb: "",
+  weight: "",
+  counselling_notes: "",
+  visit_date: new Date().toISOString().slice(0, 10),
+  findings: "",
+  recommended_action: "",
+  recommended_dp_id: "",
+  usg_required: false,
+  ...Object.fromEntries(HRP_FIELDS.map(([key]) => [key, false])),
+});
 const PMSMASessionManagementLayer = () => {
   const [searchParams] = useSearchParams();
   const userRole = getUserRole();
@@ -29,15 +61,8 @@ const PMSMASessionManagementLayer = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(25);
 
-  const [completeData, setCompleteData] = useState({
-    bp: "",
-    blood_sugar: "",
-    hb: "",
-    weight: "",
-    counselling_notes: "",
-    is_high_risk: false,
-  });
-
+  const [completeData, setCompleteData] = useState(emptyCompleteData());
+  const [availableDPs, setAvailableDPs] = useState([]);
   const [rescheduleData, setRescheduleData] = useState({
     new_scheduled_date: "",
     reschedule_reason: "",
@@ -102,8 +127,20 @@ const PMSMASessionManagementLayer = () => {
   const handleComplete = async () => {
     if (isSubmitting) return;
     try {
-      setIsSubmitting(true);
-      await pmsmaSessionAPI.completeSession(selectedSession.id, completeData);
+      const payload = {
+        ...completeData,
+        blood_sugar:
+          completeData.blood_sugar === ""
+            ? null
+            : Number(completeData.blood_sugar),
+        hb: completeData.hb === "" ? null : Number(completeData.hb),
+        weight: completeData.weight === "" ? null : Number(completeData.weight),
+        recommended_dp_id: completeData.recommended_dp_id
+          ? Number(completeData.recommended_dp_id)
+          : null,
+        visit_date: completeData.visit_date || null,
+      };
+      await pmsmaSessionAPI.completeSession(selectedSession.id, payload);
       alert("Session completed successfully");
       setShowCompleteModal(false);
       fetchQueue();
@@ -145,14 +182,18 @@ const PMSMASessionManagementLayer = () => {
 
   const openCompleteModal = (session) => {
     setSelectedSession(session);
-    setCompleteData({
-      bp: "",
-      blood_sugar: "",
-      hb: "",
-      weight: "",
-      counselling_notes: "",
-      is_high_risk: !!session.is_high_risk,
-    });
+    setCompleteData(emptyCompleteData());
+    setAvailableDPs([]);
+    deliveryPointAPI
+      .getAvailableDeliveryPoints(session.pregnant_woman_id)
+      .then((data) =>
+        setAvailableDPs(
+          Array.isArray(data)
+            ? data.filter((dp) => dp.is_active !== false)
+            : [],
+        ),
+      )
+      .catch(() => setAvailableDPs([]));
     setShowCompleteModal(true);
   };
 
@@ -856,6 +897,68 @@ const PMSMASessionManagementLayer = () => {
                               {selectedSession.counselling_notes || "—"}
                             </p>
                           </div>
+                          <div className="col-md-6">
+                            <label className="form-label fw-semibold">
+                              Visit Date
+                            </label>
+                            <p className="mb-0">
+                              {selectedSession.visit_date
+                                ? formatDate(selectedSession.visit_date)
+                                : "—"}
+                            </p>
+                          </div>
+                          <div className="col-md-6">
+                            <label className="form-label fw-semibold">
+                              Visit Number
+                            </label>
+                            <p className="mb-0 text-capitalize">
+                              {selectedSession.visit_number}
+                              {" · "}
+                              {selectedSession.visit_type || "regular"}
+                            </p>
+                          </div>
+                          <div className="col-12">
+                            <label className="form-label fw-semibold">
+                              Findings
+                            </label>
+                            <p className="mb-0">
+                              {selectedSession.findings || "—"}
+                            </p>
+                          </div>
+                          <div className="col-12">
+                            <label className="form-label fw-semibold">
+                              HRP Conditions Detected
+                            </label>
+                            <p className="mb-0">
+                              {selectedSession.hrp_conditions?.length
+                                ? selectedSession.hrp_conditions.join(", ")
+                                : "None"}
+                            </p>
+                          </div>
+                          <div className="col-12">
+                            <label className="form-label fw-semibold">
+                              Recommended Action
+                            </label>
+                            <p className="mb-0">
+                              {selectedSession.recommended_action || "—"}
+                            </p>
+                          </div>
+                          <div className="col-md-6">
+                            <label className="form-label fw-semibold">
+                              Recommended Delivery Point
+                            </label>
+                            <p className="mb-0">
+                              {selectedSession.recommended_dp_name || "—"}
+                            </p>
+                          </div>
+                          <div className="col-md-6">
+                            <label className="form-label fw-semibold">
+                              USG Required
+                            </label>
+                            <p className="mb-0">
+                              {selectedSession.usg_required ? "Yes" : "No"}
+                            </p>
+                          </div>
                         </>
                       )}
                       {selectedSession.reschedule_reason && (
@@ -997,7 +1100,7 @@ const PMSMASessionManagementLayer = () => {
                         }
                       ></textarea>
                     </div>
-                    <div className="col-12">
+                    {/* <div className="col-12">
                       <div className="form-check d-flex align-items-center">
                         <input
                           className="form-check-input me-2"
@@ -1014,6 +1117,123 @@ const PMSMASessionManagementLayer = () => {
                           Flag as High Risk
                         </label>
                       </div>
+                    </div> */}
+                    <div className="col-md-6">
+                      <label className="form-label fw-semibold text-sm">
+                        Visit Date
+                      </label>
+                      <input
+                        type="date"
+                        className="form-control"
+                        value={completeData.visit_date}
+                        onChange={(e) =>
+                          setCompleteData({
+                            ...completeData,
+                            visit_date: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                    <div className="col-12">
+                      <label className="form-label fw-semibold text-sm">
+                        Findings
+                      </label>
+                      <textarea
+                        className="form-control"
+                        rows="2"
+                        placeholder="Examination outcome..."
+                        value={completeData.findings}
+                        onChange={(e) =>
+                          setCompleteData({
+                            ...completeData,
+                            findings: e.target.value,
+                          })
+                        }
+                      ></textarea>
+                    </div>
+                    <div className="col-12">
+                      <label className="form-label fw-semibold text-sm">
+                        HRP Conditions Detected
+                      </label>
+                      <div className="row g-2">
+                        {HRP_FIELDS.map(([key, label]) => (
+                          <div className="col-md-6" key={key}>
+                            <div className="form-check d-flex align-items-center">
+                              <input
+                                className="form-check-input me-2"
+                                type="checkbox"
+                                id={key}
+                                checked={completeData[key]}
+                                onChange={(e) =>
+                                  setCompleteData({
+                                    ...completeData,
+                                    [key]: e.target.checked,
+                                  })
+                                }
+                              />
+                              <label className="form-check-label" htmlFor={key}>
+                                {label}
+                              </label>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="col-12">
+                      <label className="form-label fw-semibold text-sm">
+                        Recommended Action (optional)
+                      </label>
+                      <textarea
+                        className="form-control"
+                        rows="2"
+                        value={completeData.recommended_action}
+                        onChange={(e) =>
+                          setCompleteData({
+                            ...completeData,
+                            recommended_action: e.target.value,
+                          })
+                        }
+                      ></textarea>
+                    </div>
+                    <div className="col-md-6">
+                      <label className="form-label fw-semibold text-sm">
+                        Recommended Delivery Point
+                      </label>
+                      <select
+                        className="form-select"
+                        value={completeData.recommended_dp_id}
+                        onChange={(e) =>
+                          setCompleteData({
+                            ...completeData,
+                            recommended_dp_id: e.target.value,
+                          })
+                        }
+                      >
+                        <option value="">Not applicable</option>
+                        {availableDPs.map((dp) => (
+                          <option key={dp.id} value={dp.id}>
+                            {dp.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="col-md-6">
+                      <label className="form-label fw-semibold text-sm">
+                        USG Required
+                      </label>
+                      <select
+                        className="form-select"
+                        value={completeData.usg_required ? "yes" : "no"}
+                        onChange={(e) =>
+                          setCompleteData({
+                            ...completeData,
+                            usg_required: e.target.value === "yes",
+                          })
+                        }
+                      >
+                        <option value="no">No</option>
+                        <option value="yes">Yes</option>
+                      </select>
                     </div>
                   </div>
                 </div>

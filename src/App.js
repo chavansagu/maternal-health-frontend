@@ -27,40 +27,197 @@ import DeliveryReferralManagementPage from "./pages/DeliveryReferralManagementPa
 import MobilisationManagementPage from "./pages/MobilisationManagementPage";
 import PNCReminderManagementPage from "./pages/PNCReminderManagementPage";
 import IVRCallLogsPage from "./pages/IVRCallLogsPage";
-
+import EnhancedTrackingPage from "./pages/EnhancedTrackingPage";
 function App() {
   return (
     <BrowserRouter>
       <RouteScrollToTop />
       <Routes>
-        <Route exact path='/' element={<Navigate to='/sign-in' replace />} />
-        
-        <Route exact path='/users-list' element={<UsersListPage />} />
-        <Route exact path='/add-user' element={<AddUserPage />} />
-        <Route exact path='/dashboard-district' element={<ProtectedRoute allowedRoles={['district']}><DashboardDistrictPage /></ProtectedRoute>} />
-        <Route exact path='/dashboard-block' element={<ProtectedRoute allowedRoles={['block']}><DashboardBlockPage /></ProtectedRoute>} />
-        <Route exact path='/dashboard-sub-centre' element={<ProtectedRoute allowedRoles={['sub_centre']}><DashboardSubCentrePage /></ProtectedRoute>} />
-        <Route exact path='/dashboard-usg-centre' element={<ProtectedRoute allowedRoles={['usg_centre']}><DashboardUSGCentrePage /></ProtectedRoute>} />
-        <Route exact path='/sign-in' element={<SignInPage />} />
-        <Route exact path='/forgot-password' element={<ForgotPasswordPage />} />
-        <Route exact path='/reset-password' element={<ResetPasswordPage />} />
-        <Route exact path='/change-password' element={<ProtectedRoute><ChangePasswordPage /></ProtectedRoute>} />
-        <Route exact path='/administrative-management' element={<AdministrativeManagementPage />} />
-        <Route exact path='/pregnant-women-management' element={<ProtectedRoute allowedRoles={['district', 'block', 'sub_centre']}><PregnantWomenManagementPage /></ProtectedRoute>} />
-        <Route exact path='/usg-appointment-management' element={<ProtectedRoute allowedRoles={['block', 'usg_centre', 'district', 'pmsma']}><USGAppointmentManagementPage /></ProtectedRoute>} />
-        <Route exact path='/anc-visit-management' element={<ANCVisitManagementPage />} />
-        <Route exact path='/reports' element={<ReportsPage />} />
-        <Route exact path='/audit-logs' element={<ProtectedRoute allowedRoles={['district', 'block']}><AuditLogsPage /></ProtectedRoute>} />
-        <Route exact path='/notifications' element={<ProtectedRoute><NotificationPage /></ProtectedRoute>} />
-        <Route exact path='/dashboard-dp' element={<ProtectedRoute allowedRoles={['dp']}><DashboardDPPage /></ProtectedRoute>} />
-        <Route exact path='/dashboard-pmsma' element={<ProtectedRoute allowedRoles={['pmsma']}><DashboardPMSMAPage /></ProtectedRoute>} />
-        <Route exact path='/pmsma-sessions' element={<ProtectedRoute allowedRoles={['pmsma', 'district']}><PMSMASessionManagementPage /></ProtectedRoute>} />
-        <Route exact path='/pmsma-scheduling' element={<ProtectedRoute allowedRoles={['sub_centre']}><PMSMASchedulingPage /></ProtectedRoute>} />
-        <Route exact path='/delivery-referral-management' element={<ProtectedRoute allowedRoles={['sub_centre', 'dp', 'block', 'district', 'pmsma']}><DeliveryReferralManagementPage /></ProtectedRoute>} />
-        <Route exact path='/mobilisation-management' element={<ProtectedRoute allowedRoles={['sub_centre', 'block', 'district']}><MobilisationManagementPage /></ProtectedRoute>} />
-        <Route exact path='/pnc-reminders' element={<ProtectedRoute allowedRoles={['sub_centre', 'block', 'district']}><PNCReminderManagementPage /></ProtectedRoute>} />
-        <Route exact path='/ivr-call-logs' element={<ProtectedRoute allowedRoles={['district', 'block']}><IVRCallLogsPage /></ProtectedRoute>} />
-        <Route exact path='*' element={<ErrorPage />} />
+        <Route exact path="/" element={<Navigate to="/sign-in" replace />} />
+
+        <Route exact path="/users-list" element={<UsersListPage />} />
+        <Route exact path="/add-user" element={<AddUserPage />} />
+        <Route
+          exact
+          path="/dashboard-district"
+          element={
+            <ProtectedRoute allowedRoles={["district"]}>
+              <DashboardDistrictPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          exact
+          path="/dashboard-block"
+          element={
+            <ProtectedRoute allowedRoles={["block"]}>
+              <DashboardBlockPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          exact
+          path="/dashboard-sub-centre"
+          element={
+            <ProtectedRoute allowedRoles={["sub_centre"]}>
+              <DashboardSubCentrePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          exact
+          path="/dashboard-usg-centre"
+          element={
+            <ProtectedRoute allowedRoles={["usg_centre"]}>
+              <DashboardUSGCentrePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route exact path="/sign-in" element={<SignInPage />} />
+        <Route exact path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route exact path="/reset-password" element={<ResetPasswordPage />} />
+        <Route
+          exact
+          path="/change-password"
+          element={
+            <ProtectedRoute>
+              <ChangePasswordPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          exact
+          path="/administrative-management"
+          element={<AdministrativeManagementPage />}
+        />
+        <Route
+          exact
+          path="/pregnant-women-management"
+          element={
+            <ProtectedRoute allowedRoles={["district", "block", "sub_centre"]}>
+              <PregnantWomenManagementPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          exact
+          path="/usg-appointment-management"
+          element={
+            <ProtectedRoute
+              allowedRoles={["block", "usg_centre", "district", "pmsma"]}
+            >
+              <USGAppointmentManagementPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          exact
+          path="/anc-visit-management"
+          element={<ANCVisitManagementPage />}
+        />
+        <Route exact path="/reports" element={<ReportsPage />} />
+        <Route
+          exact
+          path="/audit-logs"
+          element={
+            <ProtectedRoute allowedRoles={["district", "block"]}>
+              <AuditLogsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          exact
+          path="/notifications"
+          element={
+            <ProtectedRoute>
+              <NotificationPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          exact
+          path="/dashboard-dp"
+          element={
+            <ProtectedRoute allowedRoles={["dp"]}>
+              <DashboardDPPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          exact
+          path="/dashboard-pmsma"
+          element={
+            <ProtectedRoute allowedRoles={["pmsma"]}>
+              <DashboardPMSMAPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          exact
+          path="/pmsma-sessions"
+          element={
+            <ProtectedRoute allowedRoles={["pmsma", "district"]}>
+              <PMSMASessionManagementPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          exact
+          path="/pmsma-scheduling"
+          element={
+            <ProtectedRoute allowedRoles={["sub_centre"]}>
+              <PMSMASchedulingPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          exact
+          path="/delivery-referral-management"
+          element={
+            <ProtectedRoute
+              allowedRoles={["sub_centre", "dp", "block", "district", "pmsma"]}
+            >
+              <DeliveryReferralManagementPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          exact
+          path="/mobilisation-management"
+          element={
+            <ProtectedRoute allowedRoles={["sub_centre", "block", "district"]}>
+              <MobilisationManagementPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          exact
+          path="/enhanced-tracking"
+          element={
+            <ProtectedRoute allowedRoles={["block", "district"]}>
+              <EnhancedTrackingPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          exact
+          path="/pnc-reminders"
+          element={
+            <ProtectedRoute allowedRoles={["sub_centre", "block", "district"]}>
+              <PNCReminderManagementPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          exact
+          path="/ivr-call-logs"
+          element={
+            <ProtectedRoute allowedRoles={["district", "block"]}>
+              <IVRCallLogsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route exact path="*" element={<ErrorPage />} />
       </Routes>
     </BrowserRouter>
   );

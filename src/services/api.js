@@ -1551,3 +1551,16 @@ export const ivrAPI = {
     }),
   syncStatus: () => apiRequest("/api/v2/ivr/sync-status", { method: "POST" }),
 };
+
+export const enhancedTrackingAPI = {
+  getList: (filters = {}) => {
+    const params = new URLSearchParams();
+    if (filters.level) params.append("level", filters.level);
+    if (filters.search) params.append("search", filters.search);
+    if (filters.blockId) params.append("block_id", filters.blockId);
+    params.append("page", filters.page || 1);
+    params.append("per_page", filters.perPage || 25);
+    return apiRequest(`/api/v2/enhanced-tracking?${params}`);
+  },
+  getSummary: () => apiRequest("/api/v2/enhanced-tracking/summary"),
+};
