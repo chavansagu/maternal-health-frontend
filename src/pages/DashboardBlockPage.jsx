@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import MasterLayout from "../masterLayout/MasterLayout";
 import Breadcrumb from "../components/Breadcrumb";
+import AlertSummaryWidget from "../components/AlertSummaryWidget";
 import { dashboardAPI, enhancedTrackingAPI } from "../services/api";
 import { Icon } from "@iconify/react";
 import ReactApexChart from "react-apexcharts";
@@ -159,6 +160,7 @@ const DashboardBlockPage = () => {
   return (
     <MasterLayout>
       <Breadcrumb title="Block Dashboard" />
+      <AlertSummaryWidget />
 
       <div className="row row-cols-xxxl-5 row-cols-lg-3 row-cols-sm-2 row-cols-1 gy-4">
         <div className="col">

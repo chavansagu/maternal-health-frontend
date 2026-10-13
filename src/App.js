@@ -18,6 +18,7 @@ import USGAppointmentManagementPage from "./pages/USGAppointmentManagementPage";
 import ANCVisitManagementPage from "./pages/ANCVisitManagementPage";
 import ReportsPage from "./pages/ReportsPage";
 import AuditLogsPage from "./pages/AuditLogsPage";
+import EscalationLogsPage from "./pages/EscalationLogsPage";
 import NotificationPage from "./pages/NotificationPage";
 import DashboardDPPage from "./pages/DashboardDPPage";
 import DashboardPMSMAPage from "./pages/DashboardPMSMAPage";
@@ -28,6 +29,7 @@ import MobilisationManagementPage from "./pages/MobilisationManagementPage";
 import PNCReminderManagementPage from "./pages/PNCReminderManagementPage";
 import IVRCallLogsPage from "./pages/IVRCallLogsPage";
 import EnhancedTrackingPage from "./pages/EnhancedTrackingPage";
+import HRPManagementPage from "./pages/HRPManagementPage";
 function App() {
   return (
     <BrowserRouter>
@@ -127,6 +129,15 @@ function App() {
         />
         <Route
           exact
+          path="/escalation-logs"
+          element={
+            <ProtectedRoute allowedRoles={["district", "block"]}>
+              <EscalationLogsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          exact
           path="/notifications"
           element={
             <ProtectedRoute>
@@ -196,6 +207,15 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={["block", "district"]}>
               <EnhancedTrackingPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          exact
+          path="/hrp"
+          element={
+            <ProtectedRoute allowedRoles={["sub_centre", "block", "district"]}>
+              <HRPManagementPage />
             </ProtectedRoute>
           }
         />

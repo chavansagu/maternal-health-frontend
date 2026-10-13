@@ -1,7 +1,6 @@
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 const getAuthToken = () => localStorage.getItem("access_token");
-
 export const apiRequest = async (endpoint, options = {}) => {
   const token = getAuthToken();
   const headers = {
@@ -32,27 +31,29 @@ export const apiRequest = async (endpoint, options = {}) => {
       );
     }
 
-    // Handle validation errors (422)
-    if (response.status === 422 && errorData.detail) {
-      const passwordError = Array.isArray(errorData.detail)
-        ? errorData.detail.find(
-            (err) => err.loc && err.loc.includes("password"),
-          )
-        : null;
-
-      if (passwordError) {
-        throw new Error(passwordError.msg || "Password validation failed");
-      }
-    }
-
-    // Handle other errors
+    // Handle validation errors (422) + all other backend errors
     if (errorData.detail) {
       console.error("[API ERROR DETAIL]", JSON.stringify(errorData.detail));
-      throw new Error(
-        typeof errorData.detail === "string"
-          ? errorData.detail
-          : `API Error: ${response.status}`,
-      );
+
+      // 400/403/404/409 -> detail string aata hai
+      if (typeof errorData.detail === "string") {
+        throw new Error(errorData.detail);
+      }
+
+      // 422 -> detail array aata hai
+      if (Array.isArray(errorData.detail)) {
+        const messages = errorData.detail.map((err) => {
+          const field = Array.isArray(err.loc)
+            ? String(err.loc[err.loc.length - 1]).replace(/_/g, " ")
+            : "";
+          const msg = String(err.msg || "Invalid value").replace(
+            /^Value error,\s*/i,
+            "",
+          );
+          return field ? `${field}: ${msg}` : msg;
+        });
+        throw new Error(messages.join("\n"));
+      }
     }
 
     throw new Error(`API Error: ${response.status}`);
@@ -313,6 +314,8 @@ export function buildFilterParams(f = {}) {
 }
 
 export const pregnantWomenAPI = {
+  // EDD summary + change log
+  getEddInfo: (id) => apiRequest(`/api/v2/pregnant-women/${id}/edd-info`),
   // Staff registration
   registerPregnantWoman: (data) =>
     apiRequest("/api/v2/pregnant-women", {
@@ -682,6 +685,8 @@ export const grievanceAPI = {
 };
 
 export const usgAppointmentAPI = {
+  getHighRiskOptions: () =>
+    apiRequest("/api/v2/usg-appointments/high-risk-options"),
   scheduleAppointment: (formData) =>
     apiRequest("/api/v2/usg-appointments/", {
       method: "POST",
@@ -1278,7 +1283,6 @@ export const aiReportsAPI = {
     return apiRequest(`/api/v2/ai-reports/history?${params}`);
   },
 };
-
 export const mobilisationAPI = {
   getCases: (filters = {}) => {
     const params = new URLSearchParams();
@@ -1286,10 +1290,18 @@ export const mobilisationAPI = {
     if (filters.triggerType) params.append("trigger_type", filters.triggerType);
     if (filters.escalationLevel)
       params.append("escalation_level", filters.escalationLevel);
+    if (filters.priority) params.append("priority", filters.priority);
     return apiRequest(`/api/v2/mobilisation/?${params}`);
   },
   getCount: () => apiRequest("/api/v2/mobilisation/count"),
   getCaseById: (caseId) => apiRequest(`/api/v2/mobilisation/${caseId}`),
+  getHistory: (caseId) => apiRequest(`/api/v2/mobilisation/${caseId}/history`),
+  updateStage: (caseId, data) =>
+    apiRequest(`/api/v2/mobilisation/${caseId}/update-stage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    }),
   markMobilised: (caseId, remarks) =>
     apiRequest(`/api/v2/mobilisation/${caseId}/mark-mobilised`, {
       method: "POST",
@@ -1297,7 +1309,6 @@ export const mobilisationAPI = {
       body: JSON.stringify({ remarks }),
     }),
 };
-
 export const deliveryReferralAPI = {
   getReferrals: (status = null) => {
     const params = new URLSearchParams();
@@ -1353,6 +1364,25 @@ export const deliveryReferralAPI = {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
+    }),
+
+  searchBeneficiary: (q) =>
+    apiRequest(
+      `/api/v2/delivery-referrals/beneficiary-search?q=${encodeURIComponent(q)}`,
+    ),
+  getBeneficiaryHistory: (pwId) =>
+    apiRequest(`/api/v2/delivery-referrals/beneficiary/${pwId}/history`),
+  getClinicalNotes: (referralId) =>
+    apiRequest(`/api/v2/delivery-referrals/${referralId}/clinical-notes`),
+  addClinicalNote: (referralId, data) =>
+    apiRequest(`/api/v2/delivery-referrals/${referralId}/clinical-notes`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    }),
+  markPatientReached: (referralId) =>
+    apiRequest(`/api/v2/delivery-referrals/${referralId}/patient-reached`, {
+      method: "POST",
     }),
 };
 
@@ -1436,6 +1466,32 @@ export const notificationAPI = {
     apiRequest(`/api/v2/notifications/${notificationId}`, { method: "DELETE" }),
   clearAllRead: () =>
     apiRequest("/api/v2/notifications/clear-all", { method: "DELETE" }),
+  // Spec M: alerts summary (dashboard widget)
+  getAlertsSummary: () => apiRequest("/api/v2/notifications/alerts/summary"),
+
+  // Spec M: escalation log
+  getEscalationLogs: (filters = {}) => {
+    const params = new URLSearchParams();
+    Object.entries({
+      skip: 0,
+      limit: 20,
+      ...filters,
+    }).forEach(([k, v]) => {
+      if (v !== null && v !== undefined && v !== "") params.append(k, v);
+    });
+    return apiRequest(`/api/v2/notifications/escalation-logs?${params}`);
+  },
+  // Spec M: offline sync
+  syncNotifications: (since = null) => {
+    const params = new URLSearchParams();
+    if (since) params.append("since", since);
+    return apiRequest(`/api/v2/notifications/sync?${params}`);
+  },
+  ackSync: (ids) =>
+    apiRequest("/api/v2/notifications/sync/ack", {
+      method: "POST",
+      body: JSON.stringify({ ids }),
+    }),
 };
 
 export const pmsmaAPI = {
@@ -1563,4 +1619,48 @@ export const enhancedTrackingAPI = {
     return apiRequest(`/api/v2/enhanced-tracking?${params}`);
   },
   getSummary: () => apiRequest("/api/v2/enhanced-tracking/summary"),
+};
+
+export const hrpAPI = {
+  // Status-wise counts (summary cards)
+  getSummary: () => apiRequest("/api/v2/hrp/summary"),
+
+  // HRP list. filters: status, source, blockId, search, includeClosed, page, perPage
+  getList: (filters = {}) => {
+    const params = new URLSearchParams();
+    if (filters.status) params.append("status", filters.status);
+    if (filters.source) params.append("source", filters.source);
+    if (filters.blockId) params.append("block_id", filters.blockId);
+    if (filters.search) params.append("search", filters.search);
+    if (filters.includeClosed) params.append("include_closed", "true");
+    params.append("page", filters.page || 1);
+    params.append("per_page", filters.perPage || 25);
+    return apiRequest(`/api/v2/hrp?${params}`);
+  },
+
+  // Ek woman: conditions + history
+  getDetail: (pwId) => apiRequest(`/api/v2/hrp/${pwId}`),
+
+  // status: "under_follow_up" | "delivery_planned" | "auto"
+  changeStatus: (pwId, status, note = "") =>
+    apiRequest(`/api/v2/hrp/${pwId}/status`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status, note: note || null }),
+    }),
+
+  // conditions: ["Severe Anaemia", ...], source: "mcp_card" | "manual"
+  addConditions: (pwId, conditions, source = "mcp_card", remarks = "") =>
+    apiRequest(`/api/v2/hrp/${pwId}/conditions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ conditions, source, remarks: remarks || null }),
+    }),
+
+  resolveCondition: (conditionId, note = "") =>
+    apiRequest(`/api/v2/hrp/conditions/${conditionId}/resolve`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ note: note || null }),
+    }),
 };

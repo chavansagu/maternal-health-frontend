@@ -5,6 +5,8 @@ import ThemeToggleButton from "../helper/ThemeToggleButton";
 import { logout, getUsername, getUserRole } from "../services/auth";
 import { pregnantWomenAPI, notificationAPI } from "../services/api";
 import NotificationPanel from "../components/NotificationPanel";
+import PriorityAlertPopup from "../components/PriorityAlertPopup";
+import useNotificationSync from "../hook/useNotificationSync";
 
 const MasterLayout = ({ children }) => {
   let [sidebarActive, seSidebarActive] = useState(false);
@@ -18,11 +20,16 @@ const MasterLayout = ({ children }) => {
   const userRole = getUserRole();
   const [unreadCount, setUnreadCount] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
+  useNotificationSync();
 
   useEffect(() => {
     fetchUnreadCount();
     const interval = setInterval(fetchUnreadCount, 30000);
-    return () => clearInterval(interval);
+    window.addEventListener("notifications-synced", fetchUnreadCount);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("notifications-synced", fetchUnreadCount);
+    };
   }, []);
 
   const fetchUnreadCount = async () => {
@@ -426,6 +433,22 @@ const MasterLayout = ({ children }) => {
                 </NavLink>
               </li>
             )}
+            {/* HRP Menu - sub_centre, block, district */}
+            {(userRole === "sub_centre" ||
+              userRole === "block" ||
+              userRole === "district") && (
+              <li>
+                <NavLink
+                  to="/hrp"
+                  className={(navData) =>
+                    navData.isActive ? "active-page" : ""
+                  }
+                >
+                  <Icon icon="mdi:heart-pulse" className="menu-icon" />
+                  <span>High-Risk Pregnancy</span>
+                </NavLink>
+              </li>
+            )}
             {/* PNC Reminders Menu - sub_centre, block, district */}
             {(userRole === "sub_centre" ||
               userRole === "block" ||
@@ -468,6 +491,34 @@ const MasterLayout = ({ children }) => {
                 >
                   <Icon icon="material-symbols:history" className="menu-icon" />
                   <span>Audit Logs</span>
+                </NavLink>
+              </li>
+            )}
+            {(userRole === "district" || userRole === "block") && (
+              <li>
+                <NavLink
+                  to="/audit-logs"
+                  className={(navData) =>
+                    navData.isActive ? "active-page" : ""
+                  }
+                >
+                  <Icon icon="material-symbols:history" className="menu-icon" />
+                  <span>Audit Logs</span>
+                </NavLink>
+              </li>
+            )}
+
+            {/* Escalation Log - Only for district and block users */}
+            {(userRole === "district" || userRole === "block") && (
+              <li>
+                <NavLink
+                  to="/escalation-logs"
+                  className={(navData) =>
+                    navData.isActive ? "active-page" : ""
+                  }
+                >
+                  <Icon icon="solar:bell-bing-outline" className="menu-icon" />
+                  <span>Escalation Log</span>
                 </NavLink>
               </li>
             )}
@@ -673,7 +724,8 @@ const MasterLayout = ({ children }) => {
             fetchUnreadCount();
           }}
         />
-
+        {/* Priority Alert Popup */}
+        <PriorityAlertPopup />
         {/* Footer section */}
         <footer className="d-footer">
           <div className="row align-items-center justify-content-between">

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import MasterLayout from "../masterLayout/MasterLayout";
 import Breadcrumb from "../components/Breadcrumb";
+import AlertSummaryWidget from "../components/AlertSummaryWidget";
 import {
   dashboardAPI,
   pmsmaSessionAPI,
@@ -775,6 +776,7 @@ const DashboardDistrictPage = () => {
   return (
     <MasterLayout>
       <Breadcrumb title="District Dashboard" />
+      <AlertSummaryWidget />
       <style>{KPI_CSS}</style>
 
       {/* ── KPI cards, grouped by topic. Each card = one headline number; the

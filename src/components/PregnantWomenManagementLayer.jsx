@@ -26,7 +26,7 @@ import {
 } from "../services/api";
 
 import { getUserRole } from "../services/auth";
-
+import { MCP_CARD_CONDITIONS } from "../utils/hrpOptions";
 import {
   validateMobileNumber,
   formatMobileNumberInput,
@@ -89,6 +89,9 @@ const PregnantWomenManagementLayer = () => {
   const [showBulkUploadModal, setShowBulkUploadModal] = useState(false);
 
   const [selectedWoman, setSelectedWoman] = useState(null);
+  const [showEddLogModal, setShowEddLogModal] = useState(false);
+  const [eddInfo, setEddInfo] = useState(null);
+  const [loadingEddInfo, setLoadingEddInfo] = useState(false);
 
   const [registerData, setRegisterData] = useState({
     full_name: "",
@@ -116,6 +119,9 @@ const PregnantWomenManagementLayer = () => {
     is_high_risk: false,
 
     risk_factors: "",
+    is_difficult_area: false,
+    is_migrant_worker: false,
+    mcp_card_conditions: [],
   });
 
   const [updateData, setUpdateData] = useState({});
@@ -512,6 +518,9 @@ const PregnantWomenManagementLayer = () => {
         is_high_risk: false,
 
         risk_factors: "",
+        is_difficult_area: false,
+        is_migrant_worker: false,
+        mcp_card_conditions: [],
       });
 
       setErrors({});
@@ -520,7 +529,7 @@ const PregnantWomenManagementLayer = () => {
     } catch (error) {
       console.error("Error registering:", error);
 
-      alert("Failed to register pregnant woman");
+      alert(error.message || "Failed to register pregnant woman");
     } finally {
       setIsSubmitting(false);
     }
@@ -640,7 +649,49 @@ const PregnantWomenManagementLayer = () => {
     if (days < 0) return null;
     return `${Math.floor(days / 7)} weeks ${days % 7} days`;
   };
+  const openEddLog = async (woman) => {
+    setEddInfo(null);
+    setShowEddLogModal(true);
+    setLoadingEddInfo(true);
+    try {
+      const res = await pregnantWomenAPI.getEddInfo(woman.id);
+      setEddInfo(res);
+    } catch (e) {
+      alert(e.message || "Failed to load EDD change log");
+      setShowEddLogModal(false);
+    } finally {
+      setLoadingEddInfo(false);
+    }
+  };
 
+  const EDD_BUCKET_STYLE = {
+    more_than_30: "bg-success-focus text-success-main",
+    "30_16": "bg-success-focus text-success-main",
+    "15_11": "bg-info-focus text-info-main",
+    "10_8": "bg-warning-focus text-warning-main",
+    "7_4": "bg-warning-focus text-warning-main",
+    "3_1": "bg-danger-focus text-danger-main",
+    edd_today: "bg-danger-focus text-danger-main",
+    overdue: "bg-danger-focus text-danger-main",
+    delivered: "bg-neutral-200 text-neutral-600",
+  };
+
+  const getEddBucketBadge = (woman) => {
+    if (!woman.edd_bucket) return null;
+    return (
+      <span
+        className={`px-12 py-2 rounded-pill fw-medium text-xs d-inline-block mt-4 ${
+          EDD_BUCKET_STYLE[woman.edd_bucket] ||
+          "bg-neutral-200 text-neutral-600"
+        }`}
+      >
+        {woman.edd_bucket_label}
+        {woman.edd_bucket !== "delivered" && woman.days_remaining !== null
+          ? ` (${woman.days_remaining}d)`
+          : ""}
+      </span>
+    );
+  };
   const calcDaysRemaining = (edd) => {
     if (!edd) return null;
     const today = new Date();
@@ -864,10 +915,24 @@ const PregnantWomenManagementLayer = () => {
       );
     }
 
+    // if (woman.is_high_risk) {
+    //   return (
+    //     <span className="px-24 py-4 rounded-pill fw-medium text-sm bg-danger-focus text-danger-main">
+    //       High Risk
+    //     </span>
+    //   );
+    // }
     if (woman.is_high_risk) {
+      const HRP_LABELS = {
+        risk_identified: "HRP - Risk identified",
+        under_follow_up: "HRP - Under follow-up",
+        multiple_conditions: "HRP - Multiple conditions",
+        delivery_planned: "HRP - Delivery planned",
+        case_closed: "HRP - Case closed",
+      };
       return (
         <span className="px-24 py-4 rounded-pill fw-medium text-sm bg-danger-focus text-danger-main">
-          High Risk
+          {HRP_LABELS[woman.hrp_status] || "High Risk"}
         </span>
       );
     }
@@ -1152,7 +1217,10 @@ const PregnantWomenManagementLayer = () => {
                       </div>
                     </td>
 
-                    <td>{getStatusBadge(woman)}</td>
+                    <td>
+                      {getStatusBadge(woman)}
+                      <div>{getEddBucketBadge(woman)}</div>
+                    </td>
 
                     <td>
                       <div className="d-flex align-items-center gap-10">
@@ -1212,6 +1280,9 @@ const PregnantWomenManagementLayer = () => {
                               is_high_risk: woman.is_high_risk,
 
                               risk_factors: woman.risk_factors,
+                              is_difficult_area: !!woman.is_difficult_area,
+
+                              is_migrant_worker: !!woman.is_migrant_worker,
 
                               hpr_id: woman.hpr_id,
                             });
@@ -2182,7 +2253,91 @@ const PregnantWomenManagementLayer = () => {
                       <option value={true}>High Risk</option>
                     </select>
                   </div>
+                  <div className="col-12">
+                    <label className="form-label fw-semibold">
+                      MCP Card - High-Risk Conditions
+                    </label>
+                    <div className="row g-2">
+                      {MCP_CARD_CONDITIONS.map((name) => (
+                        <div className="col-md-4 col-sm-6" key={name}>
+                          <div className="form-check">
+                            <input
+                              type="checkbox"
+                              className="form-check-input"
+                              id={`mcp-${name}`}
+                              checked={registerData.mcp_card_conditions.includes(
+                                name,
+                              )}
+                              onChange={(e) => {
+                                const next = e.target.checked
+                                  ? [...registerData.mcp_card_conditions, name]
+                                  : registerData.mcp_card_conditions.filter(
+                                      (n) => n !== name,
+                                    );
+                                setRegisterData({
+                                  ...registerData,
+                                  mcp_card_conditions: next,
+                                  is_high_risk:
+                                    next.length > 0
+                                      ? true
+                                      : registerData.is_high_risk,
+                                });
+                              }}
+                            />
+                            <label
+                              className="form-check-label"
+                              htmlFor={`mcp-${name}`}
+                            >
+                              {name}
+                            </label>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
 
+                  <div className="col-md-6">
+                    <div className="form-check">
+                      <input
+                        type="checkbox"
+                        className="form-check-input"
+                        id="reg-difficult-area"
+                        checked={registerData.is_difficult_area}
+                        onChange={(e) =>
+                          setRegisterData({
+                            ...registerData,
+                            is_difficult_area: e.target.checked,
+                          })
+                        }
+                      />
+                      <label
+                        className="form-check-label"
+                        htmlFor="reg-difficult-area"
+                      >
+                        Difficult geographical area
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="col-md-6">
+                    <div className="form-check">
+                      <input
+                        type="checkbox"
+                        className="form-check-input"
+                        id="reg-migrant"
+                        checked={registerData.is_migrant_worker}
+                        onChange={(e) =>
+                          setRegisterData({
+                            ...registerData,
+                            is_migrant_worker: e.target.checked,
+                          })
+                        }
+                      />
+                      <label className="form-check-label" htmlFor="reg-migrant">
+                        Migrant worker
+                      </label>
+                    </div>
+                  </div>
                   <div className="col-12">
                     <label className="form-label">
                       Address <span className="text-danger">*</span>
@@ -2390,7 +2545,88 @@ const PregnantWomenManagementLayer = () => {
           </div>
         </div>
       )}
-
+      {/* EDD Change Log Modal */}
+      {showEddLogModal && (
+        <div
+          className="modal fade show d-block"
+          style={{ backgroundColor: "rgba(0,0,0,0.5)", zIndex: 1060 }}
+        >
+          <div className="modal-dialog modal-lg">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">EDD Change Log</h5>
+                <button
+                  className="btn-close"
+                  onClick={() => setShowEddLogModal(false)}
+                ></button>
+              </div>
+              <div className="modal-body">
+                {loadingEddInfo || !eddInfo ? (
+                  <div className="text-center py-4">Loading...</div>
+                ) : (
+                  <>
+                    <div className="mb-16 text-sm">
+                      <div>LMP EDD: {formatDate(eddInfo.lmp_edd_date)}</div>
+                      <div>
+                        USG EDD:{" "}
+                        {eddInfo.usg_edd_date
+                          ? formatDate(eddInfo.usg_edd_date)
+                          : "Not captured yet"}
+                      </div>
+                      <div>
+                        Tracking EDD: {formatDate(eddInfo.tracking_edd)} (
+                        {eddInfo.edd_source})
+                      </div>
+                    </div>
+                    <div className="table-responsive">
+                      <table className="table bordered-table mb-0">
+                        <thead>
+                          <tr>
+                            <th>Date & Time</th>
+                            <th>Previous EDD</th>
+                            <th>New EDD</th>
+                            <th>Source</th>
+                            <th>Changed By</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {eddInfo.history.length === 0 ? (
+                            <tr>
+                              <td colSpan="5" className="text-center">
+                                No EDD changes recorded
+                              </td>
+                            </tr>
+                          ) : (
+                            eddInfo.history.map((h) => (
+                              <tr key={h.id}>
+                                <td>
+                                  {new Date(h.changed_at).toLocaleString()}
+                                </td>
+                                <td>
+                                  {h.previous_edd
+                                    ? formatDate(h.previous_edd)
+                                    : "-"}
+                                </td>
+                                <td>{formatDate(h.new_edd)}</td>
+                                <td>
+                                  {h.source === "USG_CONFIRMED"
+                                    ? "USG"
+                                    : h.source}
+                                </td>
+                                <td>{h.changed_by_name || h.changed_by}</td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       {/* View Modal */}
 
       {showViewModal && selectedWoman && (
@@ -2566,7 +2802,7 @@ const PregnantWomenManagementLayer = () => {
                     </div>
                   </div>
 
-                  <div className="col-md-6">
+                  {/* <div className="col-md-6">
                     <div className="p-16 radius-8 bg-neutral-50">
                       <span className="text-secondary-light fw-medium">
                         EDD Date :
@@ -2576,6 +2812,64 @@ const PregnantWomenManagementLayer = () => {
                         {formatDate(selectedWoman.edd_date)}
                       </span>
                     </div>
+                  </div> */}
+                  <div className="col-md-6">
+                    <div className="p-16 radius-8 bg-neutral-50">
+                      <span className="text-secondary-light fw-medium">
+                        LMP EDD :
+                      </span>
+                      <span className="ms-12 fw-semibold text-neutral-600">
+                        {formatDate(selectedWoman.lmp_edd_date)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="col-md-6">
+                    <div className="p-16 radius-8 bg-neutral-50">
+                      <span className="text-secondary-light fw-medium">
+                        USG EDD :
+                      </span>
+                      <span className="ms-12 fw-semibold text-neutral-600">
+                        {selectedWoman.usg_edd_date
+                          ? formatDate(selectedWoman.usg_edd_date)
+                          : "Not captured yet"}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="col-md-6">
+                    <div className="p-16 radius-8 bg-neutral-50">
+                      <span className="text-secondary-light fw-medium">
+                        Tracking EDD ({selectedWoman.edd_source || "LMP"}) :
+                      </span>
+                      <span className="ms-12 fw-semibold text-neutral-600">
+                        {formatDate(selectedWoman.edd_date)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="col-md-6">
+                    <div className="p-16 radius-8 bg-neutral-50">
+                      <span className="text-secondary-light fw-medium">
+                        Days Remaining :
+                      </span>
+                      <span className="ms-12 fw-semibold text-neutral-600">
+                        {selectedWoman.edd_bucket === "delivered"
+                          ? "Delivered"
+                          : (selectedWoman.days_remaining ?? "N/A")}
+                      </span>
+                      <div>{getEddBucketBadge(selectedWoman)}</div>
+                    </div>
+                  </div>
+
+                  <div className="col-12">
+                    <button
+                      type="button"
+                      className="btn btn-outline-primary btn-sm"
+                      onClick={() => openEddLog(selectedWoman)}
+                    >
+                      View EDD Change Log
+                    </button>
                   </div>
                   <div className="col-md-6">
                     <label className="form-label">Gestational Age</label>
@@ -3225,7 +3519,48 @@ const PregnantWomenManagementLayer = () => {
                   </div>
                 </div>
               </div>
+              <div className="col-md-6">
+                <div className="form-check">
+                  <input
+                    type="checkbox"
+                    className="form-check-input"
+                    id="upd-difficult-area"
+                    checked={!!updateData.is_difficult_area}
+                    onChange={(e) =>
+                      setUpdateData({
+                        ...updateData,
+                        is_difficult_area: e.target.checked,
+                      })
+                    }
+                  />
+                  <label
+                    className="form-check-label"
+                    htmlFor="upd-difficult-area"
+                  >
+                    Difficult geographical area
+                  </label>
+                </div>
+              </div>
 
+              <div className="col-md-6">
+                <div className="form-check">
+                  <input
+                    type="checkbox"
+                    className="form-check-input"
+                    id="upd-migrant"
+                    checked={!!updateData.is_migrant_worker}
+                    onChange={(e) =>
+                      setUpdateData({
+                        ...updateData,
+                        is_migrant_worker: e.target.checked,
+                      })
+                    }
+                  />
+                  <label className="form-check-label" htmlFor="upd-migrant">
+                    Migrant worker
+                  </label>
+                </div>
+              </div>
               <div className="modal-footer d-flex justify-content-center">
                 <button
                   className="btn btn-secondary"

@@ -19,6 +19,7 @@ const PMSMASchedulingLayer = () => {
     scheduled_date: "",
     pmsma_centre_id: "",
     site: "",
+    visit_type: "regular",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -95,7 +96,9 @@ const PMSMASchedulingLayer = () => {
     });
     setShowScheduleModal(true);
   };
-
+  const isHrpSelected = !!pregnantWomen.find(
+    (w) => String(w.id) === String(scheduleData.pregnant_woman_id),
+  )?.is_high_risk;
   const handleSchedule = async (e) => {
     e.preventDefault();
     if (isSubmitting) return;
@@ -114,6 +117,7 @@ const PMSMASchedulingLayer = () => {
         site: scheduleData.pmsma_centre_id
           ? undefined
           : scheduleData.site || undefined,
+        visit_type: isHrpSelected ? scheduleData.visit_type : "regular",
       });
       alert("PMSMA session scheduled successfully");
       setShowScheduleModal(false);
@@ -557,6 +561,26 @@ const PMSMASchedulingLayer = () => {
                         />
                       )}
                     </div>
+                    {isHrpSelected && (
+                      <div className="mb-3">
+                        <label className="form-label fw-semibold">
+                          Visit Type
+                        </label>
+                        <select
+                          className="form-select"
+                          value={scheduleData.visit_type}
+                          onChange={(e) =>
+                            setScheduleData({
+                              ...scheduleData,
+                              visit_type: e.target.value,
+                            })
+                          }
+                        >
+                          <option value="regular">Regular</option>
+                          <option value="additional">Additional (HRP)</option>
+                        </select>
+                      </div>
+                    )}
                   </div>
                   <div className="modal-footer">
                     <button

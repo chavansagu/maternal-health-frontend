@@ -45,7 +45,7 @@ const USGAppointmentManagementLayer = () => {
   const [pregnantWomen, setPregnantWomen] = useState([]);
   const [usgCentres, setUSGCentres] = useState([]);
   const [scanTypes, setScanTypes] = useState([]);
-  const [abnormalFindings, setAbnormalFindings] = useState({});
+  const [highRiskOptions, setHighRiskOptions] = useState([]);
   const [pregnantWomanSearch, setPregnantWomanSearch] = useState("");
   const [showPregnantWomanDropdown, setShowPregnantWomanDropdown] =
     useState(false);
@@ -89,7 +89,7 @@ const USGAppointmentManagementLayer = () => {
     trimester: "first",
     scan_type: "",
     findings: "Normal",
-    abnormal_findings: "",
+    abnormal_findings: [],
     additional_notes: "",
     doctor_name: "",
     technician_name: "",
@@ -213,11 +213,11 @@ const USGAppointmentManagementLayer = () => {
 
   const fetchAbnormalFindings = async () => {
     try {
-      const data = await authAPI.getAbnormalFindingsOptions();
-      setAbnormalFindings(data || {});
+      const data = await usgAppointmentAPI.getHighRiskOptions();
+      setHighRiskOptions(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error("Error fetching abnormal findings:", error);
-      setAbnormalFindings({});
+      console.error("Error fetching high-risk options:", error);
+      setHighRiskOptions([]);
     }
   };
 
@@ -289,15 +289,12 @@ const USGAppointmentManagementLayer = () => {
 
   const handleCompleteAppointment = async () => {
     try {
-      if (
-        !completeData.report_files ||
-        completeData.report_files.length === 0
-      ) {
-        alert("At least one USG Report file is required");
-        return;
-      }
-      if (!completeData.confirmed_edd_date) {
-        alert("Doctor-Confirmed EDD is required to save the report");
+      const errs = [];
+      if (!completeData.scan_date) errs.push("USG date is required");
+      if (!completeData.doctor_name.trim())
+        errs.push("Doctor name is required");
+      if (errs.length) {
+        alert(errs.join("\n"));
         return;
       }
       const formData = new FormData();
@@ -307,16 +304,17 @@ const USGAppointmentManagementLayer = () => {
       formData.append("trimester", completeData.trimester);
       formData.append("scan_type", completeData.scan_type);
       formData.append("findings", completeData.findings);
-      formData.append(
-        "abnormal_findings",
-        completeData.abnormal_findings || "",
-      );
+      const selectedHR =
+        completeData.findings === "Abnormal"
+          ? completeData.abnormal_findings
+          : [];
+      formData.append("abnormal_findings", JSON.stringify(selectedHR));
       formData.append("additional_notes", completeData.additional_notes || "");
       formData.append("doctor_name", completeData.doctor_name);
       formData.append("technician_name", completeData.technician_name);
       formData.append("usg_findings", completeData.usg_findings || "");
       formData.append("confirmed_edd_date", completeData.confirmed_edd_date);
-      formData.append("is_high_risk", completeData.is_high_risk);
+      formData.append("is_high_risk", selectedHR.length > 0);
       completeData.report_files.forEach((f) =>
         formData.append("report_files", f),
       );
@@ -330,7 +328,7 @@ const USGAppointmentManagementLayer = () => {
       fetchAllData();
     } catch (error) {
       console.error("Error completing appointment:", error);
-      alert(error.message || "Failed to complete appointment");
+      alert("error.message " || "Failed to complete appointment");
     }
   };
 
@@ -842,7 +840,7 @@ const USGAppointmentManagementLayer = () => {
                                       trimester: "first",
                                       scan_type: "",
                                       findings: "Normal",
-                                      abnormal_findings: "",
+                                      abnormal_findings: [],
                                       additional_notes: "",
                                       doctor_name: "",
                                       technician_name: "",
@@ -1742,7 +1740,7 @@ const USGAppointmentManagementLayer = () => {
                     </div>
                     <div className="col-md-6">
                       <label className="form-label fw-semibold">
-                        Doctor-Confirmed EDD{" "}
+                        USG EDD (required at first scan)
                         <span className="text-danger">*</span>
                       </label>
                       <input
@@ -1758,8 +1756,8 @@ const USGAppointmentManagementLayer = () => {
                         required
                       />
                       <small className="text-muted">
-                        Report cannot be saved without this. Recorded in the EDD
-                        history alongside the current date.
+                        Doctor-confirmed delivery date. Mandatory at the first
+                        scan, optional for later scans.
                       </small>
                     </div>
                     <div className="col-md-6">
@@ -1797,7 +1795,7 @@ const USGAppointmentManagementLayer = () => {
                         required
                       />
                     </div>
-                    <div className="col-md-6">
+                    {/* <div className="col-md-6">
                       <label className="form-label fw-semibold">
                         Gestational Age <span className="text-danger">*</span>
                       </label>
@@ -1814,7 +1812,7 @@ const USGAppointmentManagementLayer = () => {
                         }
                         required
                       />
-                    </div>
+                    </div> */}
                     <div className="col-md-6">
                       <label className="form-label fw-semibold">
                         Trimester <span className="text-danger">*</span>
@@ -1880,41 +1878,43 @@ const USGAppointmentManagementLayer = () => {
                     {completeData.findings === "Abnormal" && (
                       <div className="col-12">
                         <label className="form-label fw-semibold">
-                          Abnormal Findings
+                          High-Risk Findings (select all that apply)
                         </label>
-                        <select
-                          className="form-select mb-3"
-                          value={completeData.abnormal_findings}
-                          onChange={(e) =>
-                            setCompleteData({
-                              ...completeData,
-                              abnormal_findings: e.target.value,
-                            })
-                          }
-                        >
-                          <option value="">Select Abnormal Finding</option>
-                          {(
-                            abnormalFindings[
-                              completeData.trimester + "_trimester"
-                            ] || []
-                          ).map((finding) => (
-                            <option key={finding} value={finding}>
-                              {finding}
-                            </option>
+                        <div className="row g-2">
+                          {highRiskOptions.map((finding) => (
+                            <div className="col-md-6" key={finding}>
+                              <div className="form-check d-flex align-items-center">
+                                <input
+                                  className="form-check-input me-2"
+                                  type="checkbox"
+                                  id={`hr-${finding}`}
+                                  checked={completeData.abnormal_findings.includes(
+                                    finding,
+                                  )}
+                                  onChange={(e) =>
+                                    setCompleteData({
+                                      ...completeData,
+                                      abnormal_findings: e.target.checked
+                                        ? [
+                                            ...completeData.abnormal_findings,
+                                            finding,
+                                          ]
+                                        : completeData.abnormal_findings.filter(
+                                            (f) => f !== finding,
+                                          ),
+                                    })
+                                  }
+                                />
+                                <label
+                                  className="form-check-label"
+                                  htmlFor={`hr-${finding}`}
+                                >
+                                  {finding}
+                                </label>
+                              </div>
+                            </div>
                           ))}
-                        </select>
-                        <textarea
-                          className="form-control"
-                          rows="3"
-                          value={completeData.abnormal_findings}
-                          onChange={(e) =>
-                            setCompleteData({
-                              ...completeData,
-                              abnormal_findings: e.target.value,
-                            })
-                          }
-                          placeholder="Or describe custom abnormal findings..."
-                        ></textarea>
+                        </div>
                       </div>
                     )}
                     <div className="col-md-6">
@@ -1936,7 +1936,7 @@ const USGAppointmentManagementLayer = () => {
                     </div>
                     <div className="col-md-6">
                       <label className="form-label fw-semibold">
-                        Technician Name <span className="text-danger">*</span>
+                        Technician Name
                       </label>
                       <input
                         type="text"
@@ -1948,7 +1948,6 @@ const USGAppointmentManagementLayer = () => {
                             technician_name: e.target.value,
                           })
                         }
-                        required
                       />
                     </div>
                     <div className="col-12">
@@ -2115,8 +2114,7 @@ const USGAppointmentManagementLayer = () => {
                     disabled={
                       !completeData.completed_date ||
                       !completeData.scan_date ||
-                      !completeData.confirmed_edd_date ||
-                      !completeData.report_files.length
+                      !completeData.doctor_name.trim()
                     }
                   >
                     Complete Appointment

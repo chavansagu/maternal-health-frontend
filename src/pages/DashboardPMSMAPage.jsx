@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import MasterLayout from "../masterLayout/MasterLayout";
 import Breadcrumb from "../components/Breadcrumb";
+import AlertSummaryWidget from "../components/AlertSummaryWidget";
 import { dashboardAPI } from "../services/api";
 
 const DashboardPMSMAPage = () => {
@@ -41,10 +42,16 @@ const DashboardPMSMAPage = () => {
   return (
     <MasterLayout>
       <Breadcrumb title="PMSMA Dashboard" />
+      <AlertSummaryWidget />
 
       <div className="row row-cols-xxxl-4 row-cols-lg-3 row-cols-sm-2 row-cols-1 gy-4">
         <div className="col">
-          <div className="card shadow-none border bg-gradient-start-1 h-100" role="button" style={{cursor: 'pointer'}} onClick={() => navigate('/pmsma-sessions?tab=queue')}>
+          <div
+            className="card shadow-none border bg-gradient-start-1 h-100"
+            role="button"
+            style={{ cursor: "pointer" }}
+            onClick={() => navigate("/pmsma-sessions?tab=queue")}
+          >
             <div className="card-body p-20">
               <div className="d-flex flex-wrap align-items-center justify-content-between gap-3">
                 <div>
@@ -59,7 +66,12 @@ const DashboardPMSMAPage = () => {
         </div>
 
         <div className="col">
-          <div className="card shadow-none border bg-gradient-start-2 h-100" role="button" style={{cursor: 'pointer'}} onClick={() => navigate('/pmsma-sessions?tab=queue')}>
+          <div
+            className="card shadow-none border bg-gradient-start-2 h-100"
+            role="button"
+            style={{ cursor: "pointer" }}
+            onClick={() => navigate("/pmsma-sessions?tab=queue")}
+          >
             <div className="card-body p-20">
               <div className="d-flex flex-wrap align-items-center justify-content-between gap-3">
                 <div>
@@ -74,45 +86,20 @@ const DashboardPMSMAPage = () => {
         </div>
 
         <div className="col">
-          <div className="card shadow-none border bg-gradient-start-3 h-100" role="button" style={{cursor: 'pointer'}} onClick={() => navigate('/pmsma-sessions?tab=completed')}>
+          <div
+            className="card shadow-none border bg-gradient-start-3 h-100"
+            role="button"
+            style={{ cursor: "pointer" }}
+            onClick={() => navigate("/pmsma-sessions?tab=completed")}
+          >
             <div className="card-body p-20">
               <div className="d-flex flex-wrap align-items-center justify-content-between gap-3">
                 <div>
                   <p className="fw-medium text-primary-light mb-1">
                     PMSMA Sessions Completed
                   </p>
-                  <h6 className="mb-0">{stats?.completed_pmsma_sessions || 0}</h6>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="col">
-          <div className="card shadow-none border bg-gradient-start-4 h-100" role="button" style={{cursor: 'pointer'}} onClick={() => navigate('/usg-appointment-management?tab=pending')}>
-            <div className="card-body p-20">
-              <div className="d-flex flex-wrap align-items-center justify-content-between gap-3">
-                <div>
-                  <p className="fw-medium text-primary-light mb-1">
-                    USG Appointments Pending
-                  </p>
-                  <h6 className="mb-0">{stats?.pending_usg_appointments || 0}</h6>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="col">
-          <div className="card shadow-none border bg-gradient-start-5 h-100" role="button" style={{cursor: 'pointer'}} onClick={() => navigate('/usg-appointment-management?tab=all')}>
-            <div className="card-body p-20">
-              <div className="d-flex flex-wrap align-items-center justify-content-between gap-3">
-                <div>
-                  <p className="fw-medium text-primary-light mb-1">
-                    USG Appointments Active
-                  </p>
                   <h6 className="mb-0">
-                    {(stats?.total_usg_appointments || 0) - (stats?.completed_usg_appointments || 0)}
+                    {stats?.completed_pmsma_sessions || 0}
                   </h6>
                 </div>
               </div>
@@ -121,14 +108,68 @@ const DashboardPMSMAPage = () => {
         </div>
 
         <div className="col">
-          <div className="card shadow-none border bg-gradient-start-1 h-100" role="button" style={{cursor: 'pointer'}} onClick={() => navigate('/usg-appointment-management?tab=rescheduled')}>
+          <div
+            className="card shadow-none border bg-gradient-start-4 h-100"
+            role="button"
+            style={{ cursor: "pointer" }}
+            onClick={() => navigate("/usg-appointment-management?tab=pending")}
+          >
+            <div className="card-body p-20">
+              <div className="d-flex flex-wrap align-items-center justify-content-between gap-3">
+                <div>
+                  <p className="fw-medium text-primary-light mb-1">
+                    USG Appointments Pending
+                  </p>
+                  <h6 className="mb-0">
+                    {stats?.pending_usg_appointments || 0}
+                  </h6>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="col">
+          <div
+            className="card shadow-none border bg-gradient-start-5 h-100"
+            role="button"
+            style={{ cursor: "pointer" }}
+            onClick={() => navigate("/usg-appointment-management?tab=all")}
+          >
+            <div className="card-body p-20">
+              <div className="d-flex flex-wrap align-items-center justify-content-between gap-3">
+                <div>
+                  <p className="fw-medium text-primary-light mb-1">
+                    USG Appointments Active
+                  </p>
+                  <h6 className="mb-0">
+                    {(stats?.total_usg_appointments || 0) -
+                      (stats?.completed_usg_appointments || 0)}
+                  </h6>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="col">
+          <div
+            className="card shadow-none border bg-gradient-start-1 h-100"
+            role="button"
+            style={{ cursor: "pointer" }}
+            onClick={() =>
+              navigate("/usg-appointment-management?tab=rescheduled")
+            }
+          >
             <div className="card-body p-20">
               <div className="d-flex flex-wrap align-items-center justify-content-between gap-3">
                 <div>
                   <p className="fw-medium text-primary-light mb-1">
                     USG Rescheduled Appointments
                   </p>
-                  <h6 className="mb-0">{stats?.rescheduled_usg_appointments || 0}</h6>
+                  <h6 className="mb-0">
+                    {stats?.rescheduled_usg_appointments || 0}
+                  </h6>
                 </div>
               </div>
             </div>
@@ -151,7 +192,14 @@ const DashboardPMSMAPage = () => {
         </div>
 
         <div className="col">
-          <div className="card shadow-none border bg-gradient-start-2 h-100" role="button" style={{cursor: 'pointer'}} onClick={() => navigate('/delivery-referral-management?tab=pending')}>
+          <div
+            className="card shadow-none border bg-gradient-start-2 h-100"
+            role="button"
+            style={{ cursor: "pointer" }}
+            onClick={() =>
+              navigate("/delivery-referral-management?tab=pending")
+            }
+          >
             <div className="card-body p-20">
               <div className="d-flex flex-wrap align-items-center justify-content-between gap-3">
                 <div>

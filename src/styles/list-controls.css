@@ -65,6 +65,8 @@
   height: var(--lc-control-h);
   padding-top: 0;
   padding-bottom: 0;
+  line-height: calc(var(--lc-control-h) - 2px);
+  line-height: calc(var(--lc-control-h) - 2px);
   padding-left: 12px;
   font-size: 14px;
   border-radius: var(--lc-radius);
@@ -121,6 +123,7 @@
   max-width: 220px;
   height: var(--lc-control-h);
   padding-top: 0;
+  line-height: calc(var(--lc-control-h) - 2px);
   padding-bottom: 0;
   padding-left: 12px;
   font-size: 14px;
@@ -215,5 +218,9 @@
 }
 
 /* Toolbar / tabs placed inside a card-header: no extra outer margins */
-.card-header > .lc-toolbar { margin-bottom: 0; }
-.card-header > .lc-tabs { margin-bottom: 16px; }
+.card-header > .lc-toolbar {
+  margin-bottom: 0;
+}
+.card-header > .lc-tabs {
+  margin-bottom: 16px;
+}

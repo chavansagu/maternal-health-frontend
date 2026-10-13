@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import MasterLayout from "../masterLayout/MasterLayout";
 import Breadcrumb from "../components/Breadcrumb";
+import AlertSummaryWidget from "../components/AlertSummaryWidget";
 import { Icon } from "@iconify/react/dist/iconify.js";
 import { deliveryReferralAPI, dashboardAPI } from "../services/api";
 import { formatDateTime } from "../utils/dateFormatter";
@@ -40,7 +41,9 @@ const DashboardDPPage = () => {
       re_referred: "bg-danger-focus text-danger-main",
     };
     return (
-      <span className={`px-12 py-4 rounded-pill fw-medium text-sm ${map[status] || "bg-neutral-200 text-secondary-light"}`}>
+      <span
+        className={`px-12 py-4 rounded-pill fw-medium text-sm ${map[status] || "bg-neutral-200 text-secondary-light"}`}
+      >
         {status?.replace("_", " ").replace(/\b\w/g, (c) => c.toUpperCase())}
       </span>
     );
@@ -49,7 +52,10 @@ const DashboardDPPage = () => {
   if (loading) {
     return (
       <MasterLayout>
-        <div className="d-flex justify-content-center align-items-center" style={{ minHeight: "400px" }}>
+        <div
+          className="d-flex justify-content-center align-items-center"
+          style={{ minHeight: "400px" }}
+        >
           <div className="spinner-border text-primary" role="status">
             <span className="visually-hidden">Loading...</span>
           </div>
@@ -61,15 +67,25 @@ const DashboardDPPage = () => {
   return (
     <MasterLayout>
       <Breadcrumb title="Delivery Point Dashboard" />
+      <AlertSummaryWidget />
 
       {/* Stats Cards */}
       <div className="row row-cols-xxxl-4 row-cols-lg-4 row-cols-sm-2 row-cols-1 gy-4 mb-24">
         <div className="col">
-          <div className="card shadow-none border bg-gradient-start-1 h-100" role="button" style={{cursor: 'pointer'}} onClick={() => navigate('/delivery-referral-management?tab=pending')}>
+          <div
+            className="card shadow-none border bg-gradient-start-1 h-100"
+            role="button"
+            style={{ cursor: "pointer" }}
+            onClick={() =>
+              navigate("/delivery-referral-management?tab=pending")
+            }
+          >
             <div className="card-body p-20">
               <div className="d-flex flex-wrap align-items-center justify-content-between gap-3">
                 <div>
-                  <p className="fw-medium text-primary-light mb-1">Pending Referrals</p>
+                  <p className="fw-medium text-primary-light mb-1">
+                    Pending Referrals
+                  </p>
                   <h6 className="mb-0">{stats?.pending_referrals || 0}</h6>
                 </div>
                 <span className="w-44-px h-44-px radius-8 d-inline-flex justify-content-center align-items-center text-2xl bg-warning-focus text-warning-main">
@@ -80,11 +96,20 @@ const DashboardDPPage = () => {
           </div>
         </div>
         <div className="col">
-          <div className="card shadow-none border bg-gradient-start-2 h-100" role="button" style={{cursor: 'pointer'}} onClick={() => navigate('/delivery-referral-management?tab=pending')}>
+          <div
+            className="card shadow-none border bg-gradient-start-2 h-100"
+            role="button"
+            style={{ cursor: "pointer" }}
+            onClick={() =>
+              navigate("/delivery-referral-management?tab=pending")
+            }
+          >
             <div className="card-body p-20">
               <div className="d-flex flex-wrap align-items-center justify-content-between gap-3">
                 <div>
-                  <p className="fw-medium text-primary-light mb-1">Total Referrals</p>
+                  <p className="fw-medium text-primary-light mb-1">
+                    Total Referrals
+                  </p>
                   <h6 className="mb-0">{stats?.total_referrals || 0}</h6>
                 </div>
                 <span className="w-44-px h-44-px radius-8 d-inline-flex justify-content-center align-items-center text-2xl bg-info-focus text-info-main">
@@ -95,11 +120,20 @@ const DashboardDPPage = () => {
           </div>
         </div>
         <div className="col">
-          <div className="card shadow-none border bg-gradient-start-3 h-100" role="button" style={{cursor: 'pointer'}} onClick={() => navigate('/delivery-referral-management?tab=completed')}>
+          <div
+            className="card shadow-none border bg-gradient-start-3 h-100"
+            role="button"
+            style={{ cursor: "pointer" }}
+            onClick={() =>
+              navigate("/delivery-referral-management?tab=completed")
+            }
+          >
             <div className="card-body p-20">
               <div className="d-flex flex-wrap align-items-center justify-content-between gap-3">
                 <div>
-                  <p className="fw-medium text-primary-light mb-1">Completed Deliveries</p>
+                  <p className="fw-medium text-primary-light mb-1">
+                    Completed Deliveries
+                  </p>
                   <h6 className="mb-0">{stats?.completed_deliveries || 0}</h6>
                 </div>
                 <span className="w-44-px h-44-px radius-8 d-inline-flex justify-content-center align-items-center text-2xl bg-success-focus text-success-main">
@@ -110,11 +144,20 @@ const DashboardDPPage = () => {
           </div>
         </div>
         <div className="col">
-          <div className="card shadow-none border bg-gradient-start-4 h-100" role="button" style={{cursor: 'pointer'}} onClick={() => navigate('/delivery-referral-management?tab=completed')}>
+          <div
+            className="card shadow-none border bg-gradient-start-4 h-100"
+            role="button"
+            style={{ cursor: "pointer" }}
+            onClick={() =>
+              navigate("/delivery-referral-management?tab=completed")
+            }
+          >
             <div className="card-body p-20">
               <div className="d-flex flex-wrap align-items-center justify-content-between gap-3">
                 <div>
-                  <p className="fw-medium text-primary-light mb-1">Total Outcomes</p>
+                  <p className="fw-medium text-primary-light mb-1">
+                    Total Outcomes
+                  </p>
                   <h6 className="mb-0">{stats?.total_outcomes || 0}</h6>
                 </div>
                 <span className="w-44-px h-44-px radius-8 d-inline-flex justify-content-center align-items-center text-2xl bg-danger-focus text-danger-main">
@@ -146,13 +189,17 @@ const DashboardDPPage = () => {
               <tbody>
                 {recent.length === 0 ? (
                   <tr>
-                    <td colSpan="5" className="text-center py-4">No referrals found</td>
+                    <td colSpan="5" className="text-center py-4">
+                      No referrals found
+                    </td>
                   </tr>
                 ) : (
                   recent.map((r, index) => (
                     <tr key={r.id}>
                       <td>{index + 1}</td>
-                      <td className="fw-medium">{r.pregnant_woman_name || "N/A"}</td>
+                      <td className="fw-medium">
+                        {r.pregnant_woman_name || "N/A"}
+                      </td>
                       <td>{r.mobile_number || "N/A"}</td>
                       <td>{getStatusBadge(r.status)}</td>
                       <td>{formatDateTime(r.created_at)}</td>

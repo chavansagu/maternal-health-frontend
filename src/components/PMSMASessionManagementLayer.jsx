@@ -4,7 +4,14 @@ import { Icon } from "@iconify/react/dist/iconify.js";
 import { formatDate, formatDateTime } from "../utils/dateFormatter";
 import { getUserRole } from "../services/auth";
 import PMSMAANCDetails from "./child/PMSMAANCDetails";
-import { pmsmaSessionAPI, deliveryPointAPI } from "../services/api";
+import {
+  pmsmaSessionAPI,
+  deliveryPointAPI,
+  usgAppointmentAPI,
+  adminAPI,
+  authAPI,
+  deliveryReferralAPI,
+} from "../services/api";
 
 const HRP_FIELDS = [
   ["hrp_severe_anaemia", "Severe Anaemia"],
@@ -63,6 +70,20 @@ const PMSMASessionManagementLayer = () => {
 
   const [completeData, setCompleteData] = useState(emptyCompleteData());
   const [availableDPs, setAvailableDPs] = useState([]);
+  const [showUSGModal, setShowUSGModal] = useState(false);
+  const [usgSession, setUsgSession] = useState(null);
+  const [usgCentres, setUsgCentres] = useState([]);
+  const [usgData, setUsgData] = useState({
+    usg_centre_id: "",
+    scheduled_date: "",
+    appointment_type: "regular",
+  });
+  const [showReferralModal, setShowReferralModal] = useState(false);
+  const [referralSession, setReferralSession] = useState(null);
+  const [referralData, setReferralData] = useState({
+    dp_id: "",
+    observation_notes: "",
+  });
   const [rescheduleData, setRescheduleData] = useState({
     new_scheduled_date: "",
     reschedule_reason: "",
@@ -126,6 +147,28 @@ const PMSMASessionManagementLayer = () => {
 
   const handleComplete = async () => {
     if (isSubmitting) return;
+    const errs = [];
+    if (!completeData.visit_date) errs.push("Visit date is required");
+    if (!/^\d{2,3}\/\d{2,3}$/.test((completeData.bp || "").trim()))
+      errs.push("BP is required in format 120/80");
+    if (
+      completeData.blood_sugar === "" ||
+      Number(completeData.blood_sugar) <= 0
+    )
+      errs.push("Blood sugar is required");
+    if (
+      completeData.hb === "" ||
+      Number(completeData.hb) <= 0 ||
+      Number(completeData.hb) > 25
+    )
+      errs.push("Hb is required (valid value in g/dL)");
+    if (completeData.weight === "" || Number(completeData.weight) <= 0)
+      errs.push("Weight is required");
+    if (!completeData.findings.trim()) errs.push("Findings are required");
+    if (errs.length) {
+      alert(errs.join("\n"));
+      return;
+    }
     try {
       const payload = {
         ...completeData,
@@ -141,6 +184,17 @@ const PMSMASessionManagementLayer = () => {
         visit_date: completeData.visit_date || null,
       };
       await pmsmaSessionAPI.completeSession(selectedSession.id, payload);
+      if (payload.usg_required) {
+        openUSGModal(selectedSession);
+      }
+      if (payload.recommended_dp_id) {
+        setReferralSession(selectedSession);
+        setReferralData({
+          dp_id: String(payload.recommended_dp_id),
+          observation_notes: payload.recommended_action || "",
+        });
+        setShowReferralModal(true);
+      }
       alert("Session completed successfully");
       setShowCompleteModal(false);
       fetchQueue();
@@ -154,6 +208,74 @@ const PMSMASessionManagementLayer = () => {
     }
   };
 
+  const openUSGModal = async (session) => {
+    setUsgSession(session);
+    setUsgData({
+      usg_centre_id: "",
+      scheduled_date: "",
+      appointment_type: "regular",
+    });
+    try {
+      const me = await authAPI.getCurrentUser();
+      const data =
+        me?.district_id && me?.block_id
+          ? await adminAPI.getUSGCentres(0, 100, me.district_id, me.block_id)
+          : await adminAPI.getUSGCentres(0, 100);
+      setUsgCentres(Array.isArray(data) ? data : []);
+    } catch (e) {
+      setUsgCentres([]);
+    }
+    setShowUSGModal(true);
+  };
+
+  const handleScheduleUSG = async () => {
+    if (isSubmitting) return;
+    if (!usgData.usg_centre_id || !usgData.scheduled_date) {
+      alert("Select USG centre and date/time");
+      return;
+    }
+    try {
+      setIsSubmitting(true);
+      const formData = new FormData();
+      formData.append("pregnant_woman_id", usgSession.pregnant_woman_id);
+      formData.append("usg_centre_id", usgData.usg_centre_id);
+      formData.append(
+        "scheduled_date",
+        usgData.scheduled_date.length === 16
+          ? usgData.scheduled_date + ":00"
+          : usgData.scheduled_date,
+      );
+      formData.append("appointment_type", usgData.appointment_type);
+      await usgAppointmentAPI.scheduleAppointment(formData);
+      alert("USG appointment scheduled");
+      setShowUSGModal(false);
+    } catch (error) {
+      alert(error.message || "Failed to schedule USG");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  const handleCreateReferral = async () => {
+    if (isSubmitting) return;
+    if (!referralData.dp_id) {
+      alert("Delivery point is required");
+      return;
+    }
+    try {
+      setIsSubmitting(true);
+      await deliveryReferralAPI.createReferral({
+        pregnant_woman_id: referralSession.pregnant_woman_id,
+        dp_id: parseInt(referralData.dp_id),
+        observation_notes: referralData.observation_notes || null,
+      });
+      alert("Delivery referral created");
+      setShowReferralModal(false);
+    } catch (error) {
+      alert(error.message || "Failed to create referral");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
   const handleReschedule = async () => {
     if (isSubmitting) return;
     if (
@@ -620,7 +742,14 @@ const PMSMASessionManagementLayer = () => {
                               </span>
                             )}
                           </td> */}
-                          <td>{getTypeBadge(session)}</td>
+                          <td>
+                            {getTypeBadge(session)}
+                            {session.visit_type === "additional" && (
+                              <span className="badge bg-warning-focus text-warning-main ms-1">
+                                Additional
+                              </span>
+                            )}
+                          </td>
                           <td className="text-center">
                             {getStatusBadge(session.status)}
                           </td>
@@ -1437,6 +1566,186 @@ const PMSMASessionManagementLayer = () => {
           <div
             className="modal-backdrop fade show"
             onClick={() => setShowRescheduleModal(false)}
+          ></div>
+        </>
+      )}
+      {showUSGModal && usgSession && (
+        <>
+          <div className="modal fade show d-block" tabIndex="-1">
+            <div className="modal-dialog modal-dialog-centered">
+              <div className="modal-content">
+                <div className="modal-header">
+                  <h5 className="modal-title">
+                    Schedule USG — {usgSession.pregnant_woman_name}
+                  </h5>
+                  <button
+                    type="button"
+                    className="btn-close"
+                    onClick={() => setShowUSGModal(false)}
+                  ></button>
+                </div>
+                <div className="modal-body">
+                  <div className="mb-3">
+                    <label className="form-label fw-semibold">
+                      USG Centre *
+                    </label>
+                    <select
+                      className="form-select"
+                      value={usgData.usg_centre_id}
+                      onChange={(e) =>
+                        setUsgData({
+                          ...usgData,
+                          usg_centre_id: e.target.value,
+                        })
+                      }
+                    >
+                      <option value="">Select USG centre</option>
+                      {usgCentres.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="mb-3">
+                    <label className="form-label fw-semibold">
+                      Date & Time *
+                    </label>
+                    <input
+                      type="datetime-local"
+                      className="form-control"
+                      value={usgData.scheduled_date}
+                      onChange={(e) =>
+                        setUsgData({
+                          ...usgData,
+                          scheduled_date: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="mb-3">
+                    <label className="form-label fw-semibold">Type</label>
+                    <select
+                      className="form-select"
+                      value={usgData.appointment_type}
+                      onChange={(e) =>
+                        setUsgData({
+                          ...usgData,
+                          appointment_type: e.target.value,
+                        })
+                      }
+                    >
+                      <option value="regular">Regular</option>
+                      <option value="emergency">Emergency</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="modal-footer">
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => setShowUSGModal(false)}
+                  >
+                    Skip
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-success"
+                    onClick={handleScheduleUSG}
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? "Saving..." : "Schedule USG"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="modal-backdrop fade show"></div>
+        </>
+      )}
+      {showReferralModal && referralSession && (
+        <>
+          <div
+            className="modal fade show d-block"
+            tabIndex="-1"
+            style={{ zIndex: 1060 }}
+          >
+            <div className="modal-dialog modal-dialog-centered">
+              <div className="modal-content">
+                <div className="modal-header">
+                  <h5 className="modal-title">
+                    Delivery Referral — {referralSession.pregnant_woman_name}
+                  </h5>
+                  <button
+                    type="button"
+                    className="btn-close"
+                    onClick={() => setShowReferralModal(false)}
+                  ></button>
+                </div>
+                <div className="modal-body">
+                  <div className="mb-3">
+                    <label className="form-label fw-semibold">
+                      Delivery Point *
+                    </label>
+                    <select
+                      className="form-select"
+                      value={referralData.dp_id}
+                      onChange={(e) =>
+                        setReferralData({
+                          ...referralData,
+                          dp_id: e.target.value,
+                        })
+                      }
+                    >
+                      <option value="">Select delivery point</option>
+                      {availableDPs.map((dp) => (
+                        <option key={dp.id} value={dp.id}>
+                          {dp.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="mb-3">
+                    <label className="form-label fw-semibold">
+                      Observation Notes
+                    </label>
+                    <textarea
+                      className="form-control"
+                      rows="3"
+                      placeholder="Clinical observations, reason for referral..."
+                      value={referralData.observation_notes}
+                      onChange={(e) =>
+                        setReferralData({
+                          ...referralData,
+                          observation_notes: e.target.value,
+                        })
+                      }
+                    ></textarea>
+                  </div>
+                </div>
+                <div className="modal-footer">
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => setShowReferralModal(false)}
+                  >
+                    Skip
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-success"
+                    onClick={handleCreateReferral}
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? "Saving..." : "Create Referral"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div
+            className="modal-backdrop fade show"
+            style={{ zIndex: 1055 }}
           ></div>
         </>
       )}
