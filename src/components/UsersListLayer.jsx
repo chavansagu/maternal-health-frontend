@@ -1091,7 +1091,7 @@ const UsersListLayer = () => {
       {showBulkUploadModal && (
         <MastersBulkUploadModal
           onClose={() => setShowBulkUploadModal(false)}
-          onDone={() => {}}
+          onDone={() => fetchUsers()}
         />
       )}
     </div>

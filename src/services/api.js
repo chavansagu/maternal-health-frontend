@@ -178,6 +178,12 @@ export const userAPI = {
 };
 
 export const dashboardAPI = {
+  getKpiSnapshot: () => apiRequest("/api/v2/dashboard/kpi-snapshot"),
+  getCases: (metric, { search = "", skip = 0, limit = 25 } = {}) => {
+    const params = new URLSearchParams({ metric, skip, limit });
+    if (search) params.append("search", search);
+    return apiRequest(`/api/v2/dashboard/cases?${params}`);
+  },
   getStats: () => apiRequest("/api/v2/dashboard/stats"),
   getDistrictOverview: () => apiRequest("/api/v2/dashboard/district-overview"),
   getMonthlyTrends: (year) =>
@@ -786,6 +792,8 @@ export const ancVisitAPI = {
     apiRequest(`/api/v2/anc-visits/pregnant-woman/${pwId}`),
   getVisitsDueToday: () => apiRequest("/api/v2/anc-visits/due/today"),
   getOverdueVisits: () => apiRequest("/api/v2/anc-visits/overdue/list"),
+  getWeeklySchedule: (pwId) =>
+    apiRequest(`/api/v2/anc-visits/weekly-schedule/${pwId}`),
   getStatistics: () => apiRequest("/api/v2/anc-visits/statistics/summary"),
 };
 
@@ -1239,6 +1247,18 @@ export const auditAPI = {
   getRecentActivities: (limit = 50) =>
     apiRequest(`/api/v2/audit/recent?limit=${limit}`),
   getFilters: () => apiRequest("/api/v2/audit/filters"),
+};
+
+export const beneficiaryAuditAPI = {
+  getList: (skip = 0, limit = 25, search = "") => {
+    const params = new URLSearchParams();
+    params.append("skip", skip);
+    params.append("limit", limit);
+    if (search && search.trim()) params.append("search", search.trim());
+    return apiRequest(`/api/v2/beneficiary-audit/pregnant-women?${params}`);
+  },
+  getTimeline: (pwId) =>
+    apiRequest(`/api/v2/beneficiary-audit/pregnant-women/${pwId}/timeline`),
 };
 
 export const aiReportsAPI = {

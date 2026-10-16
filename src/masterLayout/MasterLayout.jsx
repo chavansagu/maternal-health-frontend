@@ -307,6 +307,7 @@ const MasterLayout = ({ children }) => {
             {/* USG Appointment Management Menu - district, block, usg_centre, pmsma */}
             {(userRole === "district" ||
               userRole === "block" ||
+              userRole === "sub_centre" ||
               userRole === "usg_centre" ||
               userRole === "pmsma") && (
               <li>
@@ -497,13 +498,13 @@ const MasterLayout = ({ children }) => {
             {(userRole === "district" || userRole === "block") && (
               <li>
                 <NavLink
-                  to="/audit-logs"
+                  to="/pw-audit-logs"
                   className={(navData) =>
                     navData.isActive ? "active-page" : ""
                   }
                 >
                   <Icon icon="material-symbols:history" className="menu-icon" />
-                  <span>Audit Logs</span>
+                  <span>Beneficiaries Audit Logs</span>
                 </NavLink>
               </li>
             )}

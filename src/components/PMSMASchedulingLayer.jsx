@@ -428,6 +428,13 @@ const PMSMASchedulingLayer = () => {
                       </td>
                       <td className="text-center">
                         {getStatusBadge(session.status)}
+                        <br />
+                        {/* {getTypeBadge(session)} */}
+                        {session.visit_type === "additional" && (
+                          <span className="badge bg-warning-focus text-warning-main ms-1">
+                            Additional
+                          </span>
+                        )}
                       </td>
                       <td>
                         <div className="d-flex align-items-center gap-10 justify-content-center">

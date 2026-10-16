@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import MasterLayout from "../masterLayout/MasterLayout";
 import Breadcrumb from "../components/Breadcrumb";
 import AlertSummaryWidget from "../components/AlertSummaryWidget";
+import DistrictCommandCenter from "../components/DistrictCommandCenter";
+import DistrictCaseList from "../components/DistrictCaseList";
 import {
   dashboardAPI,
   pmsmaSessionAPI,
@@ -295,9 +297,17 @@ const DashboardDistrictPage = () => {
   const [enhancedSummary, setEnhancedSummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [ancViewFilter, setAncViewFilter] = useState("Yearly");
+  const [kpiSnapshot, setKpiSnapshot] = useState(null);
+  const [openCard, setOpenCard] = useState(null); // { key, label } of the card whose list is open
   const [selectedBlock, setSelectedBlock] = useState("all");
   const currentYear = new Date().getFullYear();
-
+  // Command-center cards: today's snapshot (written daily by the scheduler)
+  useEffect(() => {
+    dashboardAPI
+      .getKpiSnapshot()
+      .then(setKpiSnapshot)
+      .catch((e) => console.error("KPI snapshot failed", e));
+  }, []);
   // Advanced-analytics data (ANC/USG/PMSMA/Delivery/Geography monitoring charts
   // + tables, Age/Risk breakdown, Weekly Trends and Needs Attention) is fetched
   // and derived by this hook. The overdue-USG click handler navigates to the
@@ -777,11 +787,25 @@ const DashboardDistrictPage = () => {
     <MasterLayout>
       <Breadcrumb title="District Dashboard" />
       <AlertSummaryWidget />
+
+      <DistrictCommandCenter
+        data={kpiSnapshot?.metrics}
+        activeCard={openCard?.key}
+        onCardClick={(key, label) => setOpenCard({ key, label })}
+      >
+        {openCard && (
+          <DistrictCaseList
+            metric={openCard.key}
+            title={openCard.label}
+            onClose={() => setOpenCard(null)}
+          />
+        )}
+      </DistrictCommandCenter>
       <style>{KPI_CSS}</style>
 
       {/* ── KPI cards, grouped by topic. Each card = one headline number; the
           coloured chips underneath break it down (and link to the filtered list). ── */}
-      {(() => {
+      {/* {(() => {
         const totalPW = stats?.total_pregnant_women || 0;
         const activePW = stats?.active_pregnant_women || 0;
         const deliveredPW = Math.max(0, totalPW - activePW);
@@ -811,7 +835,6 @@ const DashboardDistrictPage = () => {
 
         return (
           <>
-            {/* Pregnancies */}
             <SectionHeading
               icon="gridicons:multiple-users"
               title="Pregnancies"
@@ -875,7 +898,6 @@ const DashboardDistrictPage = () => {
                 note="Pending + escalated follow-ups"
               />
             </div>
-            {/* Enhanced Tracking (28 weeks and above) */}
             <div className="mt-24">
               <SectionHeading
                 icon="mdi:shield-alert-outline"
@@ -915,7 +937,6 @@ const DashboardDistrictPage = () => {
                 note="HRP, near EDD and not mobilised"
               />
             </div>
-            {/* USG */}
             <div className="mt-24">
               <SectionHeading
                 icon="material-symbols:radiology"
@@ -965,7 +986,6 @@ const DashboardDistrictPage = () => {
               />
             </div>
 
-            {/* Delivery */}
             <div className="mt-24">
               <SectionHeading
                 icon="material-symbols:local-shipping-outline"
@@ -1048,7 +1068,6 @@ const DashboardDistrictPage = () => {
               />
             </div>
 
-            {/* PMSMA */}
             <div className="mt-24">
               <SectionHeading
                 icon="material-symbols:event-available"
@@ -1091,33 +1110,33 @@ const DashboardDistrictPage = () => {
             </div>
           </>
         );
-      })()}
+      })()} */}
 
       {/* ── Detailed analytics filters (Block/Sub-Centre/Ward/period/etc.) —
           apply to every monitoring section below (ANC through Needs Attention). ── */}
-      <div className="d-flex align-items-center gap-2 mt-24 mb-16">
+      {/* <div className="d-flex align-items-center gap-2 mt-24 mb-16">
         <Icon icon="mdi:filter-variant" className="text-primary text-2xl" />
         <h6 className="text-lg fw-semibold mb-0">Detailed Analytics Filters</h6>
-      </div>
-      <AnalyticsControls aa={aa} />
+      </div> */}
+      {/* <AnalyticsControls aa={aa} /> */}
 
       {/* ── 3. ANC Monitoring ─────────────────────────────────────────── */}
-      <AncMonitoringSection aa={aa} />
+      {/* <AncMonitoringSection aa={aa} /> */}
 
       {/* ── 4. USG Monitoring ─────────────────────────────────────────── */}
-      <UsgMonitoringSection aa={aa} />
+      {/* <UsgMonitoringSection aa={aa} /> */}
 
       {/* ── 5. PMSMA Monitoring ───────────────────────────────────────── */}
-      <PmsmaMonitoringSection aa={aa} />
+      {/* <PmsmaMonitoringSection aa={aa} /> */}
 
       {/* ── 6. Delivery Monitoring ────────────────────────────────────── */}
-      <DeliveryMonitoringSection aa={aa} />
+      {/* <DeliveryMonitoringSection aa={aa} /> */}
 
       {/* ── 7. Geography — Block-wise Performance chart (this page's own
           monthly-trend view, with a block picker) + Geography — Blocks
           table (per-block snapshot for the filtered period, from the
           analytics hook). ── */}
-      <div className="d-flex align-items-center gap-2 mt-24 mb-16">
+      {/* <div className="d-flex align-items-center gap-2 mt-24 mb-16">
         <Icon
           icon="mdi:map-marker-radius-outline"
           className="text-primary text-2xl"
@@ -1187,16 +1206,16 @@ const DashboardDistrictPage = () => {
       </section>
       <div className="mt-24">
         <GeographyBlocksSection aa={aa} />
-      </div>
+      </div> */}
 
       {/* ── 8. Advanced Analytics: Age Distribution & Risk Factors,
           Registration Trends, High-Risk Timeline/Trend, Weekly Trends. ── */}
-      <div className="d-flex align-items-center gap-2 mt-24 mb-16">
+      {/* <div className="d-flex align-items-center gap-2 mt-24 mb-16">
         <Icon icon="mdi:chart-box-outline" className="text-primary text-2xl" />
         <h6 className="text-lg fw-semibold mb-0">Advanced Analytics</h6>
-      </div>
+      </div> */}
 
-      <AgeRiskSection aa={aa} />
+      {/* <AgeRiskSection aa={aa} />
 
       <section className="row gy-4 mt-1">
         <div className="col-xxl-8">
@@ -1258,10 +1277,10 @@ const DashboardDistrictPage = () => {
             </div>
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* High Risk Timeline */}
-      <section className="row gy-4 mt-1">
+      {/* <section className="row gy-4 mt-1">
         <div className="col-12">
           <div
             className="card h-100 shadow-sm border-0"
@@ -1312,14 +1331,14 @@ const DashboardDistrictPage = () => {
             </div>
           </div>
         </div>
-      </section>
+      </section> */}
 
-      <div className="mt-24">
+      {/* <div className="mt-24">
         <WeeklyTrendsSection aa={aa} />
-      </div>
+      </div> */}
 
       {/* ── 9. Needs Attention — always last. ─────────────────────────── */}
-      <NeedsAttentionSection aa={aa} />
+      {/* <NeedsAttentionSection aa={aa} /> */}
     </MasterLayout>
   );
 };

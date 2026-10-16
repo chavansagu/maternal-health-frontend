@@ -742,16 +742,15 @@ const PMSMASessionManagementLayer = () => {
                               </span>
                             )}
                           </td> */}
-                          <td>
-                            {getTypeBadge(session)}
+                          <td>{getTypeBadge(session)}</td>
+                          <td className="text-center">
+                            {getStatusBadge(session.status)}
+                            <br />
                             {session.visit_type === "additional" && (
                               <span className="badge bg-warning-focus text-warning-main ms-1">
                                 Additional
                               </span>
                             )}
-                          </td>
-                          <td className="text-center">
-                            {getStatusBadge(session.status)}
                           </td>
                           <td>
                             <div className="d-flex align-items-center gap-10 justify-content-center">
@@ -1324,6 +1323,25 @@ const PMSMASessionManagementLayer = () => {
                         }
                       ></textarea>
                     </div>
+
+                    <div className="col-md-6">
+                      <label className="form-label fw-semibold text-sm">
+                        USG Required
+                      </label>
+                      <select
+                        className="form-select"
+                        value={completeData.usg_required ? "yes" : "no"}
+                        onChange={(e) =>
+                          setCompleteData({
+                            ...completeData,
+                            usg_required: e.target.value === "yes",
+                          })
+                        }
+                      >
+                        <option value="no">No</option>
+                        <option value="yes">Yes</option>
+                      </select>
+                    </div>
                     <div className="col-md-6">
                       <label className="form-label fw-semibold text-sm">
                         Recommended Delivery Point
@@ -1344,24 +1362,6 @@ const PMSMASessionManagementLayer = () => {
                             {dp.name}
                           </option>
                         ))}
-                      </select>
-                    </div>
-                    <div className="col-md-6">
-                      <label className="form-label fw-semibold text-sm">
-                        USG Required
-                      </label>
-                      <select
-                        className="form-select"
-                        value={completeData.usg_required ? "yes" : "no"}
-                        onChange={(e) =>
-                          setCompleteData({
-                            ...completeData,
-                            usg_required: e.target.value === "yes",
-                          })
-                        }
-                      >
-                        <option value="no">No</option>
-                        <option value="yes">Yes</option>
                       </select>
                     </div>
                   </div>

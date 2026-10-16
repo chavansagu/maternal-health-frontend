@@ -37,6 +37,9 @@ const ANCVisitManagementLayer = () => {
   const [facilityType, setFacilityType] = useState("auto");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(25);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [scheduleData, setScheduleData] = useState(null);
+  const [scheduleLoading, setScheduleLoading] = useState(false);
 
   const [visitData, setVisitData] = useState({
     pregnant_woman_id: "",
@@ -274,7 +277,38 @@ const ANCVisitManagementLayer = () => {
       (item, index, arr) => arr.indexOf(item) === index,
     );
   };
+  const openWeeklySchedule = async (visit) => {
+    setScheduleData(null);
+    setShowScheduleModal(true);
+    setScheduleLoading(true);
+    try {
+      const data = await ancVisitAPI.getWeeklySchedule(visit.pregnant_woman_id);
+      setScheduleData(data);
+    } catch (error) {
+      console.error("Error loading weekly schedule:", error);
+      alert(error.message || "Failed to load weekly schedule");
+      setShowScheduleModal(false);
+    } finally {
+      setScheduleLoading(false);
+    }
+  };
 
+  const getSlotBadge = (status, label) => {
+    const styles = {
+      completed: "bg-success-focus text-success-main",
+      due: "bg-info-focus text-info-main",
+      overdue: "bg-warning-focus text-warning-main",
+      missed: "bg-danger-focus text-danger-main",
+      upcoming: "bg-neutral-200 text-secondary-light",
+    };
+    return (
+      <span
+        className={`px-24 py-4 rounded-pill fw-medium text-sm ${styles[status] || styles.upcoming}`}
+      >
+        {label}
+      </span>
+    );
+  };
   const getVisitTypeBadge = (visit) => {
     if (visit.is_emergency) {
       return (
@@ -536,61 +570,82 @@ const ANCVisitManagementLayer = () => {
                       currentPage * itemsPerPage,
                     )
                     .map((visit, index) => (
-                      <tr key={visit.id}>
+                      <tr key={visit.id ?? `pw-${visit.pregnant_woman_id}`}>
                         <td>{(currentPage - 1) * itemsPerPage + index + 1}</td>
                         <td>{getPatientName(visit)}</td>
                         <td className="text-primary-600 fw-medium">
-                          #{visit.visit_number}
+                          {/* #{visit.visit_number} */}
+                          {visit.visit_number != null
+                            ? `#${visit.visit_number}`
+                            : "—"}
                         </td>
                         <td>{formatDate(visit.visit_date)}</td>
                         <td>{visit.facility_name}</td>
                         <td>{getVisitTypeBadge(visit)}</td>
                         <td>{formatDate(visit.next_visit_date)}</td>
                         <td>
-                          <div className="d-flex align-items-center gap-10 justify-content-center">
-                            <button
-                              className="bg-primary-50 text-primary-600 bg-hover-primary-100 text-hover-primary-800 w-32-px h-32-px d-flex justify-content-center align-items-center rounded-circle"
-                              onClick={() => {
-                                setSelectedVisit(visit);
-                                setShowViewModal(true);
-                              }}
-                              title="View Details"
-                            >
-                              <Icon icon="iconamoon:eye-light" />
-                            </button>
-                            {(userRole === "sub_centre" ||
-                              userRole === "block") && (
+                          {visit.id == null ? (
+                            <span className="text-secondary-light text-sm">
+                              No visit recorded
+                            </span>
+                          ) : (
+                            <div className="d-flex align-items-center gap-10 justify-content-start">
                               <button
-                                className="bg-success-focus text-success-main bg-hover-success-200 w-32-px h-32-px d-flex justify-content-center align-items-center rounded-circle"
+                                className="bg-primary-50 text-primary-600 bg-hover-primary-100 text-hover-primary-800 w-32-px h-32-px d-flex justify-content-center align-items-center rounded-circle"
                                 onClick={() => {
                                   setSelectedVisit(visit);
-                                  setVisitData({
-                                    ...visit,
-                                    visit_date: formatDateForInput(
-                                      visit.visit_date,
-                                    ),
-                                    next_visit_date: formatDateForInput(
-                                      visit.next_visit_date,
-                                    ),
-                                  });
-                                  setShowUpdateModal(true);
+                                  setShowViewModal(true);
                                 }}
-                                title="Edit"
+                                title="View Details"
                               >
-                                <Icon icon="lucide:edit" />
+                                <Icon icon="iconamoon:eye-light" />
                               </button>
-                            )}
-                            {(userRole === "district" ||
-                              userRole === "block") && (
-                              <button
-                                className="bg-danger-focus text-danger-main bg-hover-danger-200 w-32-px h-32-px d-flex justify-content-center align-items-center rounded-circle"
-                                onClick={() => handleDeleteVisit(visit.id)}
-                                title="Delete"
-                              >
-                                <Icon icon="fluent:delete-24-regular" />
-                              </button>
-                            )}
-                          </div>
+
+                              {(userRole === "sub_centre" ||
+                                userRole === "block") && (
+                                <button
+                                  className="bg-success-focus text-success-main bg-hover-success-200 w-32-px h-32-px d-flex justify-content-center align-items-center rounded-circle"
+                                  onClick={() => {
+                                    setSelectedVisit(visit);
+                                    setVisitData({
+                                      ...visit,
+                                      visit_date: formatDateForInput(
+                                        visit.visit_date,
+                                      ),
+                                      next_visit_date: formatDateForInput(
+                                        visit.next_visit_date,
+                                      ),
+                                    });
+                                    setShowUpdateModal(true);
+                                  }}
+                                  title="Edit"
+                                >
+                                  <Icon icon="lucide:edit" />
+                                </button>
+                              )}
+                              {visit.gestational_weeks >= 28 ? (
+                                <button
+                                  className="bg-warning-focus text-warning-main bg-hover-warning-200 w-32-px h-32-px d-flex justify-content-center align-items-center rounded-circle"
+                                  onClick={() => openWeeklySchedule(visit)}
+                                  title="Weekly ANC Schedule"
+                                >
+                                  <Icon icon="lucide:calendar-days" />
+                                </button>
+                              ) : (
+                                <span className="w-32-px h-32-px d-inline-block"></span>
+                              )}
+                              {(userRole === "district" ||
+                                userRole === "block") && (
+                                <button
+                                  className="bg-danger-focus text-danger-main bg-hover-danger-200 w-32-px h-32-px d-flex justify-content-center align-items-center rounded-circle"
+                                  onClick={() => handleDeleteVisit(visit.id)}
+                                  title="Delete"
+                                >
+                                  <Icon icon="fluent:delete-24-regular" />
+                                </button>
+                              )}
+                            </div>
+                          )}
                         </td>
                       </tr>
                     ))
@@ -836,10 +891,21 @@ const ANCVisitManagementLayer = () => {
                         }
                         required
                       >
-                        <option value={1}>1st ANC Visit</option>
+                        {/* <option value={1}>1st ANC Visit</option>
                         <option value={2}>2nd ANC Visit</option>
                         <option value={3}>3rd ANC Visit</option>
-                        <option value={4}>4th ANC Visit</option>
+                        <option value={4}>4th ANC Visit</option> */}
+                        {Array.from(
+                          { length: createIsEnhanced ? 17 : 4 },
+                          (_, i) => i + 1,
+                        ).map((n) => (
+                          <option key={n} value={n}>
+                            {n <= 4
+                              ? ["1st", "2nd", "3rd", "4th"][n - 1] +
+                                " ANC Visit"
+                              : `Weekly ANC Visit #${n}`}
+                          </option>
+                        ))}
                       </select>
                     </div>
                     <div className="col-md-6">
@@ -848,6 +914,7 @@ const ANCVisitManagementLayer = () => {
                       </label>
                       <input
                         type="date"
+                        // max={new Date().toLocaleDateString("en-CA")}
                         className={`form-control ${errors.visit_date ? "is-invalid" : ""}`}
                         value={visitData.visit_date}
                         onChange={(e) =>
@@ -1587,6 +1654,115 @@ const ANCVisitManagementLayer = () => {
           <div
             className="modal-backdrop fade show"
             onClick={() => setShowUpdateModal(false)}
+          ></div>
+        </>
+      )}
+
+      {/* Weekly ANC Schedule Modal */}
+      {showScheduleModal && (
+        <>
+          <div
+            className="modal fade show"
+            style={{ display: "block" }}
+            tabIndex="-1"
+          >
+            <div className="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+              <div className="modal-content">
+                <div className="modal-header">
+                  <h5 className="modal-title">
+                    Weekly ANC Schedule
+                    {scheduleData?.pregnant_woman_name &&
+                      ` — ${scheduleData.pregnant_woman_name}`}
+                  </h5>
+                  <button
+                    type="button"
+                    className="btn-close"
+                    onClick={() => setShowScheduleModal(false)}
+                  ></button>
+                </div>
+                <div className="modal-body">
+                  {scheduleLoading || !scheduleData ? (
+                    <div className="text-center py-4">
+                      <div
+                        className="spinner-border text-primary"
+                        role="status"
+                      >
+                        <span className="visually-hidden">Loading...</span>
+                      </div>
+                    </div>
+                  ) : scheduleData.slots.length === 0 ? (
+                    <p className="mb-0 text-center py-4">
+                      Weekly schedule is not available (LMP/EDD missing or
+                      delivery already completed).
+                    </p>
+                  ) : (
+                    <>
+                      <div className="d-flex flex-wrap gap-2 mb-16">
+                        {[
+                          "completed",
+                          "due",
+                          "overdue",
+                          "missed",
+                          "upcoming",
+                        ].map((key) => (
+                          <span key={key}>
+                            {getSlotBadge(
+                              key,
+                              `${key.charAt(0).toUpperCase() + key.slice(1)}: ${scheduleData.summary[key] ?? 0}`,
+                            )}
+                          </span>
+                        ))}
+                      </div>
+                      <div className="table-responsive">
+                        <table className="table bordered-table sm-table mb-0">
+                          <thead>
+                            <tr>
+                              <th>Week</th>
+                              <th>Due Date</th>
+                              <th>Window Ends</th>
+                              <th>Visit Date</th>
+                              <th>Status</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {scheduleData.slots.map((slot) => (
+                              <tr key={slot.week}>
+                                <td className="fw-medium">{slot.week}</td>
+                                <td>{formatDate(slot.due_date)}</td>
+                                <td>{formatDate(slot.window_end)}</td>
+                                <td>
+                                  {slot.visit_date
+                                    ? formatDate(slot.visit_date)
+                                    : "—"}
+                                </td>
+                                <td>
+                                  {getSlotBadge(slot.status, slot.status_label)}
+                                  {slot.days_overdue > 0 &&
+                                    ` ${slot.days_overdue}d`}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </>
+                  )}
+                </div>
+                <div className="modal-footer">
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => setShowScheduleModal(false)}
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div
+            className="modal-backdrop fade show"
+            onClick={() => setShowScheduleModal(false)}
           ></div>
         </>
       )}

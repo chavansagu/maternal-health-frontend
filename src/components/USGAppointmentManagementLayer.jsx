@@ -149,7 +149,7 @@ const USGAppointmentManagementLayer = () => {
       setLoading(false);
     }
   };
-
+  console.log(appointments, "APPoint");
   const fetchPregnantWomen = async () => {
     try {
       console.log("Fetching pregnant women...");
@@ -765,147 +765,160 @@ const USGAppointmentManagementLayer = () => {
                       (currentPage - 1) * itemsPerPage,
                       currentPage * itemsPerPage,
                     )
-                    .map((appointment, index) => (
-                      <tr key={appointment.id}>
-                        <td>{(currentPage - 1) * itemsPerPage + index + 1}</td>
-                        <td>{getPatientName(appointment)}</td>
-                        <td>{getUSGCentreName(appointment)}</td>
-                        <td>{formatDateTime(appointment.scheduled_date)}</td>
-                        {/* <td>
+                    .map((appointment, index) => {
+                      console.log(appointment.visit_type, "APPP");
+                      return (
+                        <tr key={appointment.id}>
+                          <td>
+                            {(currentPage - 1) * itemsPerPage + index + 1}
+                          </td>
+                          <td>{getPatientName(appointment)}</td>
+                          <td>{getUSGCentreName(appointment)}</td>
+                          <td>{formatDateTime(appointment.scheduled_date)}</td>
+                          {/* <td>
                           {getAppointmentTypeBadge(
                             appointment.appointment_type,
                           )}
                         </td> */}
-                        <td>{getAppointmentTypeBadge(appointment)}</td>
-                        <td>{getStatusBadge(appointment.status)}</td>
-                        <td>
-                          <div className="d-flex align-items-center gap-10 justify-content-center">
-                            <button
-                              className="bg-primary-50 text-primary-600 bg-hover-primary-100 text-hover-primary-800 w-32-px h-32-px d-flex justify-content-center align-items-center rounded-circle"
-                              onClick={() => {
-                                setSelectedAppointment(appointment);
-                                setShowViewModal(true);
-                              }}
-                              title="View Details"
-                            >
-                              <Icon icon="iconamoon:eye-light" />
-                            </button>
-                            {userRole === "usg_centre" && (
-                              <>
-                                {appointment.status === "scheduled" && (
-                                  <button
-                                    className="bg-success-focus text-success-main bg-hover-success-200 w-32-px h-32-px d-flex justify-content-center align-items-center rounded-circle"
-                                    onClick={() =>
-                                      handleAcceptAppointment(appointment.id)
-                                    }
-                                    title="Accept"
-                                  >
-                                    <Icon icon="material-symbols:check" />
-                                  </button>
-                                )}
-                              </>
+                          <td>{getAppointmentTypeBadge(appointment)}</td>
+                          <td>
+                            {getStatusBadge(appointment.status)}
+                            {appointment.visit_type === "additional" && (
+                              <span className="badge bg-warning-focus text-warning-main ms-1">
+                                Additional
+                              </span>
                             )}
-                            {(userRole === "usg_centre" ||
-                              userRole === "pmsma") &&
-                              appointment.status === "accepted" &&
-                              appointment.appointment_type !== "emergency" && (
-                                <button
-                                  className="bg-warning-focus text-warning-main bg-hover-warning-200 w-32-px h-32-px d-flex justify-content-center align-items-center rounded-circle"
-                                  onClick={() => {
-                                    setSelectedAppointment(appointment);
-                                    setRescheduleData({
-                                      new_scheduled_date: "",
-                                      reschedule_reason: "",
-                                      is_emergency_override: false,
-                                      override_reason: "",
-                                    });
-                                    setShowRescheduleModal(true);
-                                  }}
-                                  title="Reschedule"
-                                >
-                                  <Icon icon="material-symbols:schedule" />
-                                </button>
-                              )}
-                            {userRole === "usg_centre" &&
-                              (appointment.status === "accepted" ||
-                                appointment.status === "rescheduled") && (
-                                <button
-                                  className="bg-success-focus text-success-main bg-hover-success-200 w-32-px h-32-px d-flex justify-content-center align-items-center rounded-circle"
-                                  onClick={() => {
-                                    setSelectedAppointment(appointment);
-                                    setCompleteData({
-                                      completed_date: "",
-                                      scan_date: "",
-                                      gestational_age: "",
-                                      trimester: "first",
-                                      scan_type: "",
-                                      findings: "Normal",
-                                      abnormal_findings: [],
-                                      additional_notes: "",
-                                      doctor_name: "",
-                                      technician_name: "",
-                                      usg_findings: "",
-                                      confirmed_edd_date: "",
-                                      is_high_risk: false,
-                                      report_files: [],
-                                    });
-                                    setShowCompleteModal(true);
-                                  }}
-                                  title="Complete"
-                                >
-                                  <Icon icon="material-symbols:task-alt" />
-                                </button>
-                              )}
-                            {[
-                              "sub_centre",
-                              "block",
-                              "usg_centre",
-                              "pmsma",
-                            ].includes(userRole) &&
-                              appointment.status !== "completed" &&
-                              appointment.status !== "cancelled" && (
+                          </td>
+                          <td>
+                            <div className="d-flex align-items-center gap-10 justify-content-center">
+                              <button
+                                className="bg-primary-50 text-primary-600 bg-hover-primary-100 text-hover-primary-800 w-32-px h-32-px d-flex justify-content-center align-items-center rounded-circle"
+                                onClick={() => {
+                                  setSelectedAppointment(appointment);
+                                  setShowViewModal(true);
+                                }}
+                                title="View Details"
+                              >
+                                <Icon icon="iconamoon:eye-light" />
+                              </button>
+                              {userRole === "usg_centre" && (
                                 <>
-                                  <button
-                                    className="bg-success-focus text-success-main bg-hover-success-200 w-32-px h-32-px d-flex justify-content-center align-items-center rounded-circle"
-                                    onClick={() => {
-                                      setSelectedAppointment(appointment);
-                                      setUpdateData({
-                                        scheduled_date:
-                                          appointment.scheduled_date?.slice(
-                                            0,
-                                            16,
-                                          ) || "",
-                                        appointment_type:
-                                          appointment.appointment_type ||
-                                          "regular",
-                                        notes: appointment.notes || "",
-                                        prescription_files: [],
-                                      });
-                                      setShowUpdateModal(true);
-                                    }}
-                                    title="Edit Details"
-                                  >
-                                    <Icon icon="lucide:edit" />
-                                  </button>
-                                  <button
-                                    className="bg-danger-focus text-danger-main bg-hover-danger-200 w-32-px h-32-px d-flex justify-content-center align-items-center rounded-circle"
-                                    onClick={() => {
-                                      setSelectedAppointment(appointment);
-                                      setCancelData({
-                                        cancellation_reason: "",
-                                      });
-                                      setShowCancelModal(true);
-                                    }}
-                                    title="Cancel"
-                                  >
-                                    <Icon icon="fluent:delete-24-regular" />
-                                  </button>
+                                  {appointment.status === "scheduled" && (
+                                    <button
+                                      className="bg-success-focus text-success-main bg-hover-success-200 w-32-px h-32-px d-flex justify-content-center align-items-center rounded-circle"
+                                      onClick={() =>
+                                        handleAcceptAppointment(appointment.id)
+                                      }
+                                      title="Accept"
+                                    >
+                                      <Icon icon="material-symbols:check" />
+                                    </button>
+                                  )}
                                 </>
                               )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))
+                              {(userRole === "usg_centre" ||
+                                userRole === "pmsma") &&
+                                appointment.status === "accepted" &&
+                                appointment.appointment_type !==
+                                  "emergency" && (
+                                  <button
+                                    className="bg-warning-focus text-warning-main bg-hover-warning-200 w-32-px h-32-px d-flex justify-content-center align-items-center rounded-circle"
+                                    onClick={() => {
+                                      setSelectedAppointment(appointment);
+                                      setRescheduleData({
+                                        new_scheduled_date: "",
+                                        reschedule_reason: "",
+                                        is_emergency_override: false,
+                                        override_reason: "",
+                                      });
+                                      setShowRescheduleModal(true);
+                                    }}
+                                    title="Reschedule"
+                                  >
+                                    <Icon icon="material-symbols:schedule" />
+                                  </button>
+                                )}
+                              {userRole === "usg_centre" &&
+                                (appointment.status === "accepted" ||
+                                  appointment.status === "rescheduled") && (
+                                  <button
+                                    className="bg-success-focus text-success-main bg-hover-success-200 w-32-px h-32-px d-flex justify-content-center align-items-center rounded-circle"
+                                    onClick={() => {
+                                      setSelectedAppointment(appointment);
+                                      setCompleteData({
+                                        completed_date: "",
+                                        scan_date: "",
+                                        gestational_age: "",
+                                        trimester: "first",
+                                        scan_type: "",
+                                        findings: "Normal",
+                                        abnormal_findings: [],
+                                        additional_notes: "",
+                                        doctor_name: "",
+                                        technician_name: "",
+                                        usg_findings: "",
+                                        confirmed_edd_date: "",
+                                        is_high_risk: false,
+                                        report_files: [],
+                                      });
+                                      setShowCompleteModal(true);
+                                    }}
+                                    title="Complete"
+                                  >
+                                    <Icon icon="material-symbols:task-alt" />
+                                  </button>
+                                )}
+                              {[
+                                "sub_centre",
+                                "block",
+                                "usg_centre",
+                                "pmsma",
+                              ].includes(userRole) &&
+                                appointment.status !== "completed" &&
+                                appointment.status !== "cancelled" && (
+                                  <>
+                                    <button
+                                      className="bg-success-focus text-success-main bg-hover-success-200 w-32-px h-32-px d-flex justify-content-center align-items-center rounded-circle"
+                                      onClick={() => {
+                                        setSelectedAppointment(appointment);
+                                        setUpdateData({
+                                          scheduled_date:
+                                            appointment.scheduled_date?.slice(
+                                              0,
+                                              16,
+                                            ) || "",
+                                          appointment_type:
+                                            appointment.appointment_type ||
+                                            "regular",
+                                          notes: appointment.notes || "",
+                                          prescription_files: [],
+                                        });
+                                        setShowUpdateModal(true);
+                                      }}
+                                      title="Edit Details"
+                                    >
+                                      <Icon icon="lucide:edit" />
+                                    </button>
+                                    <button
+                                      className="bg-danger-focus text-danger-main bg-hover-danger-200 w-32-px h-32-px d-flex justify-content-center align-items-center rounded-circle"
+                                      onClick={() => {
+                                        setSelectedAppointment(appointment);
+                                        setCancelData({
+                                          cancellation_reason: "",
+                                        });
+                                        setShowCancelModal(true);
+                                      }}
+                                      title="Cancel"
+                                    >
+                                      <Icon icon="fluent:delete-24-regular" />
+                                    </button>
+                                  </>
+                                )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
                 )}
               </tbody>
             </table>

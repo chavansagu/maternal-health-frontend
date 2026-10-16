@@ -18,6 +18,7 @@ import USGAppointmentManagementPage from "./pages/USGAppointmentManagementPage";
 import ANCVisitManagementPage from "./pages/ANCVisitManagementPage";
 import ReportsPage from "./pages/ReportsPage";
 import AuditLogsPage from "./pages/AuditLogsPage";
+import BeneficiaryAuditLogsPage from "./pages/BeneficiaryAuditLogsPage";
 import EscalationLogsPage from "./pages/EscalationLogsPage";
 import NotificationPage from "./pages/NotificationPage";
 import DashboardDPPage from "./pages/DashboardDPPage";
@@ -106,7 +107,13 @@ function App() {
           path="/usg-appointment-management"
           element={
             <ProtectedRoute
-              allowedRoles={["block", "usg_centre", "district", "pmsma"]}
+              allowedRoles={[
+                "sub_centre",
+                "block",
+                "usg_centre",
+                "district",
+                "pmsma",
+              ]}
             >
               <USGAppointmentManagementPage />
             </ProtectedRoute>
@@ -124,6 +131,15 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={["district", "block"]}>
               <AuditLogsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          exact
+          path="/pw-audit-logs"
+          element={
+            <ProtectedRoute allowedRoles={["district", "block", "sub_centre"]}>
+              <BeneficiaryAuditLogsPage />
             </ProtectedRoute>
           }
         />
