@@ -23,6 +23,7 @@ import {
   pmsmaSessionAPI,
   pmsmaAPI,
   userAPI,
+  hrpAPI,
 } from "../services/api";
 
 import { getUserRole } from "../services/auth";
@@ -119,8 +120,8 @@ const PregnantWomenManagementLayer = () => {
     is_high_risk: false,
 
     risk_factors: "",
-    is_difficult_area: false,
-    is_migrant_worker: false,
+    // is_difficult_area: false,
+    // is_migrant_worker: false,
     mcp_card_conditions: [],
   });
 
@@ -189,7 +190,23 @@ const PregnantWomenManagementLayer = () => {
   const userRole = getUserRole();
   const [currentUserInfo, setCurrentUserInfo] = useState(null);
   const [assignedWardIds, setAssignedWardIds] = useState(null); // null = not loaded / no restriction
+  const [updateMcp, setUpdateMcp] = useState([]); // abhi tick kiye hue names
+  const [origMcp, setOrigMcp] = useState([]); // DB ke active mcp_card rows: [{id, name}]
 
+  const loadMcpConditions = async (pwId) => {
+    try {
+      const data = await hrpAPI.getDetail(pwId);
+      const active = (data.conditions || [])
+        .filter((c) => c.source === "mcp_card" && c.is_active)
+        .map((c) => ({ id: c.id, name: c.condition_name }));
+      setOrigMcp(active);
+      setUpdateMcp(active.map((c) => c.name));
+    } catch (e) {
+      console.error("Error loading HRP conditions:", e);
+      setOrigMcp([]);
+      setUpdateMcp([]);
+    }
+  };
   // Debounce search — wait 500ms after user stops typing before calling backend
 
   useEffect(() => {
@@ -518,8 +535,8 @@ const PregnantWomenManagementLayer = () => {
         is_high_risk: false,
 
         risk_factors: "",
-        is_difficult_area: false,
-        is_migrant_worker: false,
+        // is_difficult_area: false,
+        // is_migrant_worker: false,
         mcp_card_conditions: [],
       });
 
@@ -557,7 +574,17 @@ const PregnantWomenManagementLayer = () => {
       }
 
       await pregnantWomenAPI.updatePregnantWoman(selectedWoman.id, updateData);
+      // --- MCP card conditions sync ---
+      const origNames = origMcp.map((c) => c.name);
+      const toAdd = updateMcp.filter((n) => !origNames.includes(n));
+      const toResolve = origMcp.filter((c) => !updateMcp.includes(c.name));
 
+      if (toAdd.length > 0) {
+        await hrpAPI.addConditions(selectedWoman.id, toAdd, "mcp_card");
+      }
+      for (const c of toResolve) {
+        await hrpAPI.resolveCondition(c.id, "Unticked from MCP card (update)");
+      }
       alert("Updated successfully");
 
       setShowUpdateModal(false);
@@ -1280,9 +1307,9 @@ const PregnantWomenManagementLayer = () => {
                               is_high_risk: woman.is_high_risk,
 
                               risk_factors: woman.risk_factors,
-                              is_difficult_area: !!woman.is_difficult_area,
+                              // is_difficult_area: !!woman.is_difficult_area,
 
-                              is_migrant_worker: !!woman.is_migrant_worker,
+                              // is_migrant_worker: !!woman.is_migrant_worker,
 
                               hpr_id: woman.hpr_id,
                             });
@@ -1296,7 +1323,7 @@ const PregnantWomenManagementLayer = () => {
                               wards.find((w) => w.id === woman.ward_id)?.name ||
                                 "",
                             );
-
+                            loadMcpConditions(woman.id);
                             setShowUpdateModal(true);
                           }}
                           title="Edit Details"
@@ -2255,7 +2282,7 @@ const PregnantWomenManagementLayer = () => {
                   </div>
                   <div className="col-12">
                     <label className="form-label fw-semibold">
-                      MCP Card - High-Risk Conditions
+                      MCP Card - High-Risk Conditions hh
                     </label>
                     <div className="row g-2">
                       {MCP_CARD_CONDITIONS.map((name) => (
@@ -2263,7 +2290,7 @@ const PregnantWomenManagementLayer = () => {
                           <div className="form-check">
                             <input
                               type="checkbox"
-                              className="form-check-input"
+                              className="form-check-input me-2"
                               id={`mcp-${name}`}
                               checked={registerData.mcp_card_conditions.includes(
                                 name,
@@ -2296,7 +2323,7 @@ const PregnantWomenManagementLayer = () => {
                     </div>
                   </div>
 
-                  <div className="col-md-6">
+                  {/* <div className="col-md-6">
                     <div className="form-check">
                       <input
                         type="checkbox"
@@ -2337,7 +2364,7 @@ const PregnantWomenManagementLayer = () => {
                         Migrant worker
                       </label>
                     </div>
-                  </div>
+                  </div> */}
                   <div className="col-12">
                     <label className="form-label">
                       Address <span className="text-danger">*</span>
@@ -3519,7 +3546,39 @@ const PregnantWomenManagementLayer = () => {
                   </div>
                 </div>
               </div>
-              <div className="col-md-6">
+              <div className="col-12 ps-3">
+                <label className="form-label fw-semibold">
+                  MCP Card - High-Risk Conditions
+                </label>
+                <div className="row g-2">
+                  {MCP_CARD_CONDITIONS.map((name) => (
+                    <div className="col-md-4 col-sm-6" key={name}>
+                      <div className="form-check">
+                        <input
+                          type="checkbox"
+                          className="form-check-input me-2"
+                          id={`upd-mcp-${name}`}
+                          checked={updateMcp.includes(name)}
+                          onChange={(e) =>
+                            setUpdateMcp(
+                              e.target.checked
+                                ? [...updateMcp, name]
+                                : updateMcp.filter((n) => n !== name),
+                            )
+                          }
+                        />
+                        <label
+                          className="form-check-label"
+                          htmlFor={`upd-mcp-${name}`}
+                        >
+                          {name}
+                        </label>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              {/* <div className="col-md-6">
                 <div className="form-check">
                   <input
                     type="checkbox"
@@ -3540,9 +3599,9 @@ const PregnantWomenManagementLayer = () => {
                     Difficult geographical area
                   </label>
                 </div>
-              </div>
+              </div> */}
 
-              <div className="col-md-6">
+              {/* <div className="col-md-6">
                 <div className="form-check">
                   <input
                     type="checkbox"
@@ -3560,7 +3619,7 @@ const PregnantWomenManagementLayer = () => {
                     Migrant worker
                   </label>
                 </div>
-              </div>
+              </div> */}
               <div className="modal-footer d-flex justify-content-center">
                 <button
                   className="btn btn-secondary"

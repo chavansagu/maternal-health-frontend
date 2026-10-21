@@ -155,9 +155,9 @@
   --font-sm: 0.875rem;
   --font-xs: 0.75rem;
   --font-xxs: 0.625rem;
-  --nirikhyana: #FFF2E0;
+  --nirikhyana: #fff2e0;
   --nirikhyana-sidebar: #f4d4a7;
-  --nirikhyana-200: #FFF2E0;
+  --nirikhyana-200: #fff2e0;
   --primary-50: #e4f1ff;
   --primary-100: #bfdcff;
   --primary-200: #95c7ff;
@@ -301,7 +301,7 @@
   --input-bg: var(--neutral-50);
   --input-stroke: var(--neutral-300);
   --border-color: #d1d5db80;
-  --menu-border-color: #8B4513;
+  --menu-border-color: #8b4513;
 }
 
 [data-theme="dark"] {
@@ -343,8 +343,8 @@
 /* === reset css start === */
 /* === reset css start === */
 *:where(
-    :not(html, iframe, canvas, img, svg, video, audio):not(svg *, symbol *)
-  ) {
+  :not(html, iframe, canvas, img, svg, video, audio):not(svg *, symbol *)
+) {
   all: unset;
   display: revert;
 }
@@ -12707,14 +12707,24 @@ textarea:active {
 
 /* icon field css end */
 /* input Radio Css Start */
-.form-check-input {
-  cursor: pointer;
-}
-
 .form-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin-bottom: 0;
   padding-left: 0;
-  gap: 12px;
+}
+
+.form-check-input {
+  cursor: pointer;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.form-check-label {
+  margin: 0;
+  line-height: 1.5;
+  cursor: pointer;
 }
 
 .form-check.style-check .form-check-input::before {

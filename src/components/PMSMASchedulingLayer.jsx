@@ -348,11 +348,11 @@ const PMSMASchedulingLayer = () => {
           </ul>
         </div>
         <div className="d-flex align-items-center gap-2">
-          <form className="navbar-search" style={{ width: "200px" }}>
+          <form className="navbar-search">
             <input
               type="text"
-              className="bg-base h-32-px w-100"
-              style={{ fontSize: "13px" }}
+              className="bg-base h-40-px w-100"
+              // style={{ fontSize: "13px" }}
               placeholder="Search..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -360,17 +360,17 @@ const PMSMASchedulingLayer = () => {
             <Icon icon="ion:search-outline" className="icon" />
           </form>
           <button
-            className="btn btn-outline-primary btn-sm px-8 py-4 radius-8 h-32-px d-flex align-items-center gap-1"
+            className="btn btn-outline-primary btn-sm px-12 py-6 radius-8 h-40-px d-flex align-items-center gap-2"
             onClick={fetchSessions}
-            style={{ fontSize: "12px" }}
+            // style={{ fontSize: "12px" }}
           >
             <Icon icon="material-symbols:refresh" className="text-sm" />
             Refresh
           </button>
           <button
-            className="btn btn-primary btn-sm px-12 py-4 radius-8 h-32-px d-flex align-items-center gap-1"
+            className="btn btn-primary btn-sm px-12 py-6 radius-8 h-40-px d-flex align-items-center gap-2"
             onClick={openScheduleModal}
-            style={{ fontSize: "12px" }}
+            // style={{ fontSize: "12px" }}
           >
             <Icon icon="material-symbols:add" className="text-sm" />
             Schedule PMSMA

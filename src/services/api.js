@@ -1510,6 +1510,7 @@ export const notificationAPI = {
   ackSync: (ids) =>
     apiRequest("/api/v2/notifications/sync/ack", {
       method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ids }),
     }),
 };

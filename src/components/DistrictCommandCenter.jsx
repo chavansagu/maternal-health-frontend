@@ -130,6 +130,16 @@ const PANELS_STATS = [
       { key: "referral", label: "Referral status", metric: "referral_open" },
     ],
   },
+  {
+    key: "outcomes",
+    title: "Outcomes",
+    items: [
+      { key: "deliveries", label: "Deliveries", metric: "out_deliveries" },
+      { key: "live_birth", label: "Live birth", metric: "out_live_birth" },
+      { key: "stillbirth", label: "Stillbirth", metric: "out_stillbirth" },
+      { key: "deaths", label: "Deaths", metric: "out_deaths" },
+    ],
+  },
 ];
 const PANELS_TEXT = [
   // {
@@ -142,13 +152,33 @@ const PANELS_TEXT = [
   //   title: "Mobilisation & Referral",
   //   lines: ["Pending | Planned | Mobilised", "Admitted | Referral status"],
   // },
-  {
-    key: "outcomes",
-    title: "Outcomes",
-    lines: ["Deliveries | Live birth", "Stillbirth | Deaths"],
-  },
+  // {
+  //   key: "outcomes",
+  //   title: "Outcomes",
+  //   lines: ["Deliveries | Live birth", "Stillbirth | Deaths"],
+  // },
 ];
-
+// Block dashboard: "By block" is always 1, so the HRP panel shows "By sub-centre" instead
+const panelsFor = (scope) =>
+  scope !== "block"
+    ? PANELS_BARS
+    : PANELS_BARS.map((p) =>
+        p.key !== "hrp_monitoring"
+          ? p
+          : {
+              ...p,
+              rows: p.rows.map((r) =>
+                r.key === "by_block"
+                  ? {
+                      ...r,
+                      key: "by_sub_centre",
+                      label: "By sub-centre",
+                      metric: "hrp_by_sub_centre",
+                    }
+                  : r,
+              ),
+            },
+      );
 const DRILL_PATH = [
   "District",
   "Block",
@@ -235,6 +265,7 @@ const DistrictCommandCenter = ({
   priorityRows = [],
   onCardClick,
   activeCard,
+  scope = "district", // "district" | "block"
   children,
 }) => {
   // pad to at least 3 visible rows like the design
@@ -277,7 +308,7 @@ const DistrictCommandCenter = ({
       {/* list opened by a card click (rendered by the page) */}
       {children}
       {/* 2. red / high priority */}
-      <div className="cc-red-box mb-24">
+      {/* <div className="cc-red-box mb-24">
         <h6 className="cc-red-title">RED / HIGH PRIORITY – ACTION REQUIRED</h6>
         <div className="cc-table-wrap">
           <table className="cc-table">
@@ -301,11 +332,11 @@ const DistrictCommandCenter = ({
             </tbody>
           </table>
         </div>
-      </div>
+      </div> */}
 
       {/* 3. monitoring panels */}
       <div className="row row-cols-xl-3 row-cols-md-2 row-cols-1 gy-3 mb-16">
-        {PANELS_BARS.map((p) => (
+        {panelsFor(scope).map((p) => (
           <div className="col" key={p.key}>
             <div className="cc-panel">
               <h6>{p.title}</h6>
@@ -392,7 +423,7 @@ const DistrictCommandCenter = ({
       {/* 4. drill-down path */}
       <div className="cc-drill">
         <span>Drill-down:</span>
-        {DRILL_PATH.map((d, i) => (
+        {(scope === "block" ? DRILL_PATH.slice(1) : DRILL_PATH).map((d, i) => (
           <React.Fragment key={d}>
             {i > 0 && <span className="sep">&gt;</span>}
             <span>{d}</span>

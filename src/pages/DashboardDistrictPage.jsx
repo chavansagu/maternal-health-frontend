@@ -86,7 +86,7 @@ const KPI_TONES = {
   "bg-danger": "#dc2626",
 };
 
-const KPI_CSS = `
+export const KPI_CSS = `
 .kpi2 {
   position: relative; height: 100%; box-sizing: border-box;
   background: var(--white, #fff);

@@ -28,8 +28,8 @@ const STATUS_BADGE = {
 const SOURCE_OPTIONS = [
   { value: "", label: "All sources" },
   { value: "mcp_card", label: "MCP Card" },
-  { value: "difficult_area", label: "Difficult Area" },
-  { value: "migrant_worker", label: "Migrant Worker" },
+  // { value: "difficult_area", label: "Difficult Area" },
+  // { value: "migrant_worker", label: "Migrant Worker" },
   { value: "pmsma", label: "PMSMA" },
   { value: "usg", label: "USG" },
   { value: "anc_auto", label: "ANC" },
@@ -241,7 +241,7 @@ const HRPManagementLayer = () => {
                         </>
                       )}
                     </td>
-                    <td>
+                    {/* <td>
                       {r.is_difficult_area && (
                         <span className="badge bg-warning-focus text-warning-main me-1">
                           Difficult area
@@ -253,7 +253,7 @@ const HRPManagementLayer = () => {
                         </span>
                       )}
                       {!r.is_difficult_area && !r.is_migrant_worker && "-"}
-                    </td>
+                    </td> */}
                     <td>
                       <span
                         className={`badge ${STATUS_BADGE[r.hrp_status] || "bg-neutral-200"}`}

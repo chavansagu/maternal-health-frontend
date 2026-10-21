@@ -122,10 +122,10 @@ const MastersBulkUploadModal = ({ onClose, onDone }) => {
             </div>
             <div className="modal-body">
               <p className="text-sm text-secondary-light mb-8">
-                One Excel file with the sheets <b>Subcenter</b>, <b>PMSMA</b>,{" "}
-                <b>Usg User</b> and <b>DP User</b>. For every row the centre is
-                created if it is new, the sub-centre wards are created and
-                mapped, and the user is created.
+                One Excel file with the sheets <b>Block</b>, <b>Subcenter</b>,{" "}
+                <b>PMSMA</b>, <b>Usg User</b> and <b>DP User</b>. For every row
+                the block / centre is created if it is new, the sub-centre wards
+                are created and mapped, and the user is created.
               </p>
               <p className="text-sm text-secondary-light mb-16">
                 The file is checked first and you can review everything before
@@ -145,7 +145,7 @@ const MastersBulkUploadModal = ({ onClose, onDone }) => {
                 <input
                   type="file"
                   className="form-control"
-                  accept=".xlsx,.xls"
+                  accept=".xlsx"
                   onChange={(e) => {
                     setFile(e.target.files[0] || null);
                     setError("");

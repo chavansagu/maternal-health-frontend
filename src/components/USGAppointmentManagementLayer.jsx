@@ -328,7 +328,14 @@ const USGAppointmentManagementLayer = () => {
       fetchAllData();
     } catch (error) {
       console.error("Error completing appointment:", error);
-      alert("error.message " || "Failed to complete appointment");
+
+      const errorMessage =
+        error.response?.data?.detail ||
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to complete appointment";
+
+      alert(errorMessage);
     }
   };
 
@@ -624,7 +631,8 @@ const USGAppointmentManagementLayer = () => {
                 onClick={() => setActiveTab("all")}
                 type="button"
               >
-                All Appointments
+                All <br />
+                Appointments
               </button>
             </li>
             {userRole === "usg_centre" && (
@@ -644,7 +652,8 @@ const USGAppointmentManagementLayer = () => {
                 onClick={() => setActiveTab("overdue")}
                 type="button"
               >
-                Overdue Emergency
+                Overdue <br />
+                Emergency
               </button>
             </li>
             <li className="nav-item" role="presentation">
@@ -659,11 +668,12 @@ const USGAppointmentManagementLayer = () => {
           </ul>
 
           {/* Pagination Size Selector - Compact */}
-          <div className="d-flex align-items-center gap-1">
-            <span className="text-xs text-secondary-light">Show:</span>
+          <div className="d-flex align-items-center gap-2">
+            <span className="text-sm text-secondary-light">Show:</span>
             <select
               className="form-select form-select-sm"
-              style={{ width: "70px", fontSize: "12px" }}
+              // style={{ width: "70px", fontSize: "12px" }}
+              style={{ width: "auto" }}
               value={itemsPerPage}
               onChange={(e) => {
                 setItemsPerPage(Number(e.target.value));
@@ -675,15 +685,15 @@ const USGAppointmentManagementLayer = () => {
               <option value={50}>50</option>
               <option value={100}>100</option>
             </select>
-            <span className="text-xs text-secondary-light">entries</span>
+            <span className="text-sm text-secondary-light">entries</span>
           </div>
         </div>
-        <div className="d-flex align-items-center gap-2">
-          <form className="navbar-search" style={{ width: "200px" }}>
+        <div className="d-flex align-items-center gap-2 ms-auto">
+          <form className="navbar-search">
             <input
               type="text"
-              className="bg-base h-32-px w-100"
-              style={{ fontSize: "13px" }}
+              className="bg-base h-40-px w-100"
+              // style={{ fontSize: "13px" }}
               placeholder="Search..."
               title="Search by name, USG centre, appointment ID"
               value={searchTerm}
@@ -696,9 +706,9 @@ const USGAppointmentManagementLayer = () => {
           </form>
           {userRole === "sub_centre" && (
             <button
-              className="btn btn-primary btn-sm px-8 py-4 radius-8 h-32-px d-flex align-items-center gap-1"
+              className="btn btn-primary btn-sm px-12 py-6 radius-8 h-40-px d-flex align-items-center gap-2"
               onClick={() => setShowScheduleModal(true)}
-              style={{ fontSize: "12px" }}
+              // style={{ fontSize: "12px" }}
             >
               <Icon icon="material-symbols:add" className="text-sm" />
               Schedule Appointment
@@ -706,9 +716,9 @@ const USGAppointmentManagementLayer = () => {
           )}
           {userRole === "pmsma" && (
             <button
-              className="btn btn-primary btn-sm px-8 py-4 radius-8 h-32-px d-flex align-items-center gap-1"
+              className="btn btn-primary btn-sm px-12 py-6 radius-8 h-40-px d-flex align-items-center gap-2"
               onClick={() => setShowScheduleModal(true)}
-              style={{ fontSize: "12px" }}
+              // style={{ fontSize: "12px" }}
             >
               <Icon icon="material-symbols:add" className="text-sm" />
               Schedule Appointment
@@ -738,7 +748,7 @@ const USGAppointmentManagementLayer = () => {
                   <th scope="col" className="text-center">
                     Status
                   </th>
-                  <th scope="col" className="text-center">
+                  <th scope="col" className="text-start">
                     Action
                   </th>
                 </tr>
@@ -781,7 +791,7 @@ const USGAppointmentManagementLayer = () => {
                           )}
                         </td> */}
                           <td>{getAppointmentTypeBadge(appointment)}</td>
-                          <td>
+                          <td className="text-center">
                             {getStatusBadge(appointment.status)}
                             {appointment.visit_type === "additional" && (
                               <span className="badge bg-warning-focus text-warning-main ms-1">
@@ -790,7 +800,7 @@ const USGAppointmentManagementLayer = () => {
                             )}
                           </td>
                           <td>
-                            <div className="d-flex align-items-center gap-10 justify-content-center">
+                            <div className="d-flex align-items-center gap-10 justify-content-start">
                               <button
                                 className="bg-primary-50 text-primary-600 bg-hover-primary-100 text-hover-primary-800 w-32-px h-32-px d-flex justify-content-center align-items-center rounded-circle"
                                 onClick={() => {

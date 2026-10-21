@@ -6,6 +6,9 @@ import AlertSummaryWidget from "../components/AlertSummaryWidget";
 import { dashboardAPI, enhancedTrackingAPI } from "../services/api";
 import { Icon } from "@iconify/react";
 import ReactApexChart from "react-apexcharts";
+import DistrictCommandCenter from "../components/DistrictCommandCenter";
+import DistrictCaseList from "../components/DistrictCaseList";
+import { KPI_CSS } from "./DashboardDistrictPage";
 
 const DashboardBlockPage = () => {
   const navigate = useNavigate();
@@ -17,6 +20,16 @@ const DashboardBlockPage = () => {
   const [highRiskTimeline, setHighRiskTimeline] = useState(null);
   const [enhancedSummary, setEnhancedSummary] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [kpiSnapshot, setKpiSnapshot] = useState(null);
+  const [openCard, setOpenCard] = useState(null); // { key, label } of the card whose list is open
+
+  // Command-center numbers of this block (backend picks the block from the login)
+  useEffect(() => {
+    dashboardAPI
+      .getKpiSnapshot()
+      .then(setKpiSnapshot)
+      .catch((e) => console.error("KPI snapshot failed", e));
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -161,7 +174,22 @@ const DashboardBlockPage = () => {
     <MasterLayout>
       <Breadcrumb title="Block Dashboard" />
       <AlertSummaryWidget />
-
+      <DistrictCommandCenter
+        scope="block"
+        data={kpiSnapshot?.metrics}
+        activeCard={openCard?.key}
+        onCardClick={(key, label) => setOpenCard({ key, label })}
+      >
+        {openCard && (
+          <DistrictCaseList
+            metric={openCard.key}
+            title={openCard.label}
+            onClose={() => setOpenCard(null)}
+          />
+        )}
+      </DistrictCommandCenter>
+      <style>{KPI_CSS}</style>
+      {/* 
       <div className="row row-cols-xxxl-5 row-cols-lg-3 row-cols-sm-2 row-cols-1 gy-4">
         <div className="col">
           <div
@@ -358,7 +386,6 @@ const DashboardBlockPage = () => {
           </div>
         </div>
       </div>
-      {/* Enhanced Tracking (28 weeks and above) */}
       <div className="d-flex align-items-center gap-2 mt-24 mb-16">
         <h6 className="text-lg fw-semibold mb-0">Enhanced Tracking</h6>
       </div>
@@ -424,10 +451,8 @@ const DashboardBlockPage = () => {
           </div>
         </div>
       </div>
-      {/* Delivery Stats Row */}
       <div className="d-flex align-items-center gap-2 mt-24 mb-16">
         <h6 className="text-lg fw-semibold mb-0">Delivery Statistics</h6>
-        {/* <span className="px-12 py-4 rounded-pill fw-medium text-sm bg-primary-100 text-primary-600">Live</span> */}
       </div>
       <div className="row row-cols-xxxl-4 row-cols-lg-4 row-cols-sm-2 row-cols-1 gy-4 mt-1">
         <div className="col">
@@ -637,7 +662,7 @@ const DashboardBlockPage = () => {
             </div>
           </div>
         </div>
-      </section>
+      </section> */}
     </MasterLayout>
   );
 };
